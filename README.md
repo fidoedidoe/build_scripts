@@ -5,13 +5,13 @@ Collection of `#!/bin/bash` scripts created to help automate the initial build o
 * build_lineage_m9.sh 
 * etc
 
-### Thanks
-- [spookcity138](https://forum.xda-developers.com/member.php?u=7065337) & [jimmy999x](https://forum.xda-developers.com/member.php?u=7341542). For being open to questions on builing for kminilte, taking the time to educate me at each and every tentative step and demonstrating great patience.
+##### Thanks
+- [spookcity138](https://forum.xda-developers.com/member.php?u=7065337) & [jimmy999x](https://forum.xda-developers.com/member.php?u=7341542). For being open to questions on building for kminilte, taking the time to educate me at each and every tentative step and demonstrating great patience.
 - [flyhalf205](https://forum.xda-developers.com/member.php?u=3082717) for advice on building for Lineage 15 on M9. 
 
 ## build_slimrom7_kminilte.sh
 
-### Credits
+##### Credits
 - [spookcity138](https://forum.xda-developers.com/member.php?u=7065337)
 - [jimmy999x](https://forum.xda-developers.com/member.php?u=7341542)
 
