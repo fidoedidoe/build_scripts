@@ -1,6 +1,6 @@
 #!/bin/bash  
 
-INSERT_TEXT='  <?xml version="1.0" encoding="UTF-8"?>\n    <manifest>\n      <project name="LineageOS/android_device_htc_himaul" path="device/htc/himaul" remote="github" />\n      <project name="LineageOS/android_device_htc_himawl" path="device/htc/himawl" remote="github" />\n      <project name="LineageOS/android_device_htc_hima-common" path="device/htc/hima-common" remote="github" />\n      <project name="LineageOS/android_kernel_htc_msm8994" path="kernel/htc/msm8994" remote="github" />\n      <project name="LineageOS/android_device_qcom_common" path="device/qcom/common" remote="github" />\n      <project name="LineageOS/android_packages_resources_devicesettings" path="packages/resources/devicesettings" remote="github" />\n      <project name="TheMuppets/proprietary_vendor_htc" path="vendor/htc" remote="github" />\n    </manifest>\n'
+INSERT_TEXT='<?xml version="1.0" encoding="UTF-8"?>\n <manifest>\n  <project name="LineageOS/android_device_htc_himaul" path="device/htc/himaul" remote="github" />\n  <project name="LineageOS/android_device_htc_himawl" path="device/htc/himawl" remote="github" />\n  <project name="LineageOS/android_device_htc_hima-common" path="device/htc/hima-common" remote="github" />\n  <project name="LineageOS/android_kernel_htc_msm8994" path="kernel/htc/msm8994" remote="github" />\n  <project name="LineageOS/android_device_qcom_common" path="device/qcom/common" remote="github" />\n  <project name="LineageOS/android_packages_resources_devicesettings" path="packages/resources/devicesettings" remote="github" />\n  <project name="TheMuppets/proprietary_vendor_htc" path="vendor/htc" remote="github" />\n</manifest>\n'
 
 WORK_DIRECTORY="$HOME/android/rom"
 SAMPLE_REPO_DIRECTORY='frameworks'
@@ -29,16 +29,17 @@ cd "$WORK_DIRECTORY" || exit
 	
 if [ ! -d "$SAMPLE_REPO_DIRECTORY" ]; then
   echo "initialising repo for first time..."
+  mkdir -p "$WORK_DIRECTORY"/"$LOCAL_MANIFESTS_DIRECTORY"
+  rm -rf "$WORK_DIRECTORY"/"$LOCAL_MANIFESTS_DIRECTORY"/*
   repo init -u https://github.com/LineageOS/android.git -b $LOS_REVISION
 else
   echo "repo exists, reverting all local modifications..."
-  mka clobber
   repo forall -vc "git reset --hard" --quiet
   CLEAN=1
 fi
 
 PROMPT=""
-read -r -p "Continue with build process <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "Continue and sync repo <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -52,15 +53,15 @@ echo "sync repo..."
 repo sync -c --quiet --jobs="$REPO_SYNC_THREADS"
 
 if [ "$CLEAN" -eq "0" ]; then
-  echo "creating local_manifests and rerunning repo sync"           
+  echo "create local_manifests and rerunning repo sync..."           
   mkdir -p "$WORK_DIRECTORY"/"$LOCAL_MANIFESTS_DIRECTORY"
-  echo "$INSERT_TEXT" > "$WORK_DIRECTORY"/"$LOCAL_MANIFESTS_DIRECTORY"/"$LOCAL_MANIFESTS"
+  echo -e "$INSERT_TEXT" > "$WORK_DIRECTORY"/"$LOCAL_MANIFESTS_DIRECTORY"/"$LOCAL_MANIFESTS"
+  chmod ug+x "$WORK_DIRECTORY"/"$LOCAL_MANIFESTS_DIRECTORY"/"$LOCAL_MANIFESTS"
   repo sync -c --quiet --jobs="$REPO_SYNC_THREADS"
 fi
 
-
 PROMPT=""
-read -r -p "Continue with build process <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "Continue and prepare device specific code <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -73,14 +74,19 @@ fi
 echo "prepare device specific code..."
 . build/envsetup.sh
 
-echo "run repopick ..."
+if [ "$CLEAN" -eq "1" ]; then
+  echo "clearing old build output"           
+  mka clobber
+fi
+
+
+echo "running repopick (uncommitted changes)..."
 # From: https://review.lineageos.org/#/q/project:LineageOS/android_device_htc_hima-common
-repopick 194359 195049 195889 195899 194361 196446 195944 195943
+repopick 194359 195049 195889 195899 194361 196446 195943 195944
 # From: https://review.lineageos.org/#/q/project:LineageOS/android_hardware_qcom_audio
 repopick 187514 190166 190165
 
-
-echo "git fetch flyhalf205 and cherry pick..."
+echo "git fetch flyhalf205 repo and cherry pick..."
 cd "$WORK_DIRECTORY"/vendor/htc/ || exit
 git fetch https://github.com/Flyhalf205/proprietary_vendor_htc.git lineage-15.0
 git cherry-pick a01cd415790266b49ba3bc6c87e4d499eabd8632
