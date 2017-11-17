@@ -1,17 +1,15 @@
-# build_scripts
-Collection of scripts to help build various android roms from source: 
+# Overview
+Collection of `#!/bin/bash` scripts created to help automate the initial build or subsequent rebuild of AOSP (or variants)  from source for a number of devices. Each script follows a similar approach, the instructions below are in general applicable to to each. In essence it automates the steps and processes created by others (none of which is my own work - all credit goes to the original creators). I have only tested this script on my own working environment: Gnome Ubuntu 17.04; 16GB RAM; i7-7700HQ; If your environment differs from this then your experience may differ from mine.   
 
 * build_slimrom7_kminilte.sh
-* etc 
+* build_lineage_m9.sh 
 * etc
 
-## build_slimrom7_kminilte.sh
-
-### Overview
-This project is a simple `#!/bin/bash` script created to automate the initial build or subsequent rebuild of Slim Rom 7 for the Samsung S5 mini G800f (kminilte). The script simply automates the steps and processes created by others (none of which is my own work - all credit goes to the original creators). I have only tested this script on my own working environment: Gnome Ubuntu 17.04; 16GB RAM; i7-7700HQ; If your environment differs from this then your experience may differ from mine. 
-
 ### Thanks
-- [spookcity138](https://forum.xda-developers.com/member.php?u=7065337) & [jimmy999x](https://forum.xda-developers.com/member.php?u=7341542). For being open to questions, taking the time to educate me at each and every tentative step and demonstrating great patience.  
+- [spookcity138](https://forum.xda-developers.com/member.php?u=7065337) & [jimmy999x](https://forum.xda-developers.com/member.php?u=7341542). For being open to questions, taking the time to educate me at each and every tentative step and demonstrating great patience.
+- [flyhalf205](https://forum.xda-developers.com/member.php?u=3082717) for advice on building for Lineage 15 on M9. 
+
+## build_slimrom7_kminilte.sh
 
 ### Credits
 - [spookcity138](https://forum.xda-developers.com/member.php?u=7065337)
