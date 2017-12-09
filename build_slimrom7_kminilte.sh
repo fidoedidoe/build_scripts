@@ -1,15 +1,16 @@
 #!/bin/bash  
 
-INSERT_TEXT='    <!-- Is the battery LED intrusive? Used to decide if there should be a disable option -->\n    <bool name="config_intrusiveBatteryLed">true</bool>\n\n    <!-- Hardware keys present on the device, stored as a bit field.\n          This integer should equal the sum of the corresponding value for each\n          of the following keys present:\n           1 - Home\n           2 - Back\n           4 - Menu\n           8 - Assistant (search)\n          16 - App switch\n          32 - Camera\n          64 - Volume rocker\n         For example, a device with Home, Back and Menu keys would set this config to 7. -->\n    <integer name="config_deviceHardwareKeys">83</integer>\n\n    <!-- Hardware keys present on the device with the ability to wake, stored as a bit field.\n          This integer should equal the sum of the corresponding value for each\n          of the following keys present:\n           1 - Home\n           2 - Back\n           4 - Menu\n           8 - Assistant (search)\n          16 - App switch\n          32 - Camera\n          64 - Volume rocker\n         For example, a device with Home, Back and Menu keys would set this config to 7. -->\n    <integer name="config_deviceHardwareWakeKeys">65</integer>\n\n    <!-- Control the behavior when the user long presses the app switch button.\n          0 - Nothing\n          1 - Menu key\n          2 - Recent apps view in SystemUI\n          3 - Launch assist intent\n          4 - Voice Search\n          5 - In-app Search\n         This needs to match the constants in\n          policy/src/com/android/internal/policy/impl/PhoneWindowManager.java -->\n    <integer name="config_longPressOnAppSwitchBehavior">1</integer>\n\n</resources>'
+INSERT_TEXT_1='    <!-- Is the battery LED intrusive? Used to decide if there should be a disable option -->\n    <bool name="config_intrusiveBatteryLed">true</bool>\n\n    <!-- Hardware keys present on the device, stored as a bit field.\n          This integer should equal the sum of the corresponding value for each\n          of the following keys present:\n           1 - Home\n           2 - Back\n           4 - Menu\n           8 - Assistant (search)\n          16 - App switch\n          32 - Camera\n          64 - Volume rocker\n         For example, a device with Home, Back and Menu keys would set this config to 7. -->\n    <integer name="config_deviceHardwareKeys">83</integer>\n\n    <!-- Hardware keys present on the device with the ability to wake, stored as a bit field.\n          This integer should equal the sum of the corresponding value for each\n          of the following keys present:\n           1 - Home\n           2 - Back\n           4 - Menu\n           8 - Assistant (search)\n          16 - App switch\n          32 - Camera\n          64 - Volume rocker\n         For example, a device with Home, Back and Menu keys would set this config to 7. -->\n    <integer name="config_deviceHardwareWakeKeys">65</integer>\n\n    <!-- Control the behavior when the user long presses the app switch button.\n          0 - Nothing\n          1 - Menu key\n          2 - Recent apps view in SystemUI\n          3 - Launch assist intent\n          4 - Voice Search\n          5 - In-app Search\n         This needs to match the constants in\n          policy/src/com/android/internal/policy/impl/PhoneWindowManager.java -->\n    <integer name="config_longPressOnAppSwitchBehavior">1</integer>\n\n</resources>'
+INSERT_TEXT_2='#define SEC_PRODUCT_FEATURE_RIL_CALL_DUALMODE_CDMAGSM 1\n'
 SAMPLE_REPO_DIRECTORY='frameworks'
 WORK_DIRECTORY="$HOME/android/slimrom7"
-REPO_SYNC_THREADS=64
+REPO_SYNC_THREADS=16
 CLEAN=0
 SLIM_REVISION="ng7.1"
 LOS_REVISION="cm-14.1"
 
 PROMPT=""
-read -r -p "Start Repo Sync and Build process, first 'repo init' will take hours <Y/n>? (automatically continues unpromted after 5 seconds): " -t 5 -e -i Y PROMPT
+read -r -p "1/7. Initialise/Reinitialise Repo, first 'repo init' will take hours <Y/n>? (automatically continues unpromted after 5 seconds): " -t 5 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -34,8 +35,11 @@ else
   CLEAN=1
 fi
 
+echo "sync repo..."
+repo sync --quiet --jobs="$REPO_SYNC_THREADS"
+
 PROMPT=""
-read -r -p "Continue with build process <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "2/7. Initialise/Reinitialse additional local manifests <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -44,9 +48,6 @@ if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
   echo "Response: '$PROMPT', exiting!"
   exit 1
 fi
-
-echo "sync repo..."
-repo sync --quiet --jobs="$REPO_SYNC_THREADS"
 
 echo "get/reset local manifest..." 
 if [ ! -d "$WORK_DIRECTORY/device/samsung/kminilte" ]; then
@@ -79,8 +80,8 @@ else
   cd "$WORK_DIRECTORY" || exit
 fi
 
-echo "unconditionally removing folder device/samsung/smdk3470-common..."
-rm -rf "$WORK_DIRECTORY"/device/samsung/smdk3470-common
+#echo "unconditionally removing folder device/samsung/smdk3470-common..."
+#rm -rf "$WORK_DIRECTORY"/device/samsung/smdk3470-common
 
 if [ ! -d "$WORK_DIRECTORY/device/samsung/smdk3470-common" ]; then
   echo 'local manifest directory device/samsung/smdk-common doesnt exist, clone it...' 
@@ -153,7 +154,7 @@ else
 fi
 
 PROMPT=""
-read -r -p "Continue with build process <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "3/7. Resync primary repo and additional local manifests <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -165,6 +166,17 @@ fi
 
 echo "Sync Repo..."
 repo sync --quiet --jobs="$REPO_SYNC_THREADS"
+
+PROMPT=""
+read -r -p "4/7. Modify source for build<Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+echo
+if [ -z "$PROMPT" ]; then
+  PROMPT="Y"
+fi
+if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
+  echo "Response: '$PROMPT', exiting!"
+  exit 1
+fi
 
 echo "Remove references to OmniRom recovery..."
 sed -i 's/^ifeq ($(TARGET_BUILD_VARIANT),userdebug)/#ifeq ($(TARGET_BUILD_VARIANT),userdebug)/g' "$WORK_DIRECTORY"/device/samsung/kminilte/BoardConfig.mk 
@@ -180,7 +192,7 @@ sed -i 's/lineage/slim/g' lineage.mk && sed -i 's/cm/slim/g' lineage.mk && sed -
 cd "$WORK_DIRECTORY" || exit
 
 echo "insert text into file: frameworks/base/core/res/res/values/config.xml..."
-eval "sed -i 's^</resources>^$INSERT_TEXT^g' $WORK_DIRECTORY/frameworks/base/core/res/res/values/config.xml"
+eval "sed -i 's^</resources>^$INSERT_TEXT_1^g' $WORK_DIRECTORY/frameworks/base/core/res/res/values/config.xml"
 
 echo 'delete file cm_arrays.xml...'
 rm "$WORK_DIRECTORY"/device/samsung/kminilte/overlay/frameworks/base/core/res/res/values/cm_arrays.xml
@@ -189,13 +201,41 @@ echo "remove flipflap stuff from device/samsung/smdk3470-common/smdk3470-common.
 ## WARN - maybe change this to search replace (will break easily) 
 sed -i -e '91,92d' "$WORK_DIRECTORY"/device/samsung/smdk3470-common/smdk3470-common.mk
 
-echo "apply device Patch..."
+PROMPT=""
+read -r -p "5/7. Apply Patches <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+echo
+if [ -z "$PROMPT" ]; then
+  PROMPT="Y"
+fi
+if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
+  echo "Response: '$PROMPT', exiting!"
+  exit 1
+fi
+
+#due to issues with patch apply the two following patxhes manually, 
+#before running patch script ./apply.sh
+
+#Patch #1 (one stpe fails so manually edit ril.h)
+cd "$WORK_DIRECTORY"/hardware/ril/
+mv "$WORK_DIRECTORY"/device/samsung/smdk3470-common/patch/hardware_ril/0001-ril-adjust-to-G800F-MM-ril-G800FXXU1CPK5.patch .
+patch -p1 < 0001-ril-adjust-to-G800F-MM-ril-G800FXXU1CPK5.patch
+echo "manually reapplying failed Hunk #1..."
+eval "sed -i '34i$INSERT_TEXT_2' $WORK_DIRECTORY/hardware/ril/include/telephony/ril.h"
+cd "$WORK_DIRECTORY" || exit
+
+#Patch #2
+cd "$WORK_DIRECTORY"/hardware/samsung/
+mv "$WORK_DIRECTORY"/device/samsung/smdk3470-common/patch/hardware_samsung_ril/0001-add-support-for-ss222.patch .
+patch -p1 < 0001-add-support-for-ss222.patch
+cd "$WORK_DIRECTORY" || exit
+
+#Patch script
 cd "$WORK_DIRECTORY"/device/samsung/smdk3470-common/patch || exit
 ./apply.sh
 cd "$WORK_DIRECTORY" || exit
 
 PROMPT=""
-read -r -p "Continue with build process <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "6/7. Initialise environment for Build <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -216,8 +256,10 @@ if [ "$CLEAN" -eq "1" ]; then
   #mka clean
   mka clobber
 fi
+
+
 PROMPT=""
-read -r -p "Continue with build process (this segment can take hours) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "7/7. Build rom (this segment can take hours) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
