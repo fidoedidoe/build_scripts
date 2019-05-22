@@ -1,6 +1,6 @@
 From ba57ae39df8ad9f175b53657539db7d771b76fd7 Mon Sep 17 00:00:00 2001
-From: Markus Reichl <m.reichl@fivetechno.de>
-Date: Mon, 13 May 2019 15:51:56 +0200
+From: Gavin Fowler <gavin.fowler@acme.com>
+Date: Mon, 13 May 2019 15:51:57 +0200
 Subject: [PATCH 01/11] prepare cpufreq
 
 Change-Id: I52dcb939dcfe7c9aa156d8423d491587c9ad30bc
