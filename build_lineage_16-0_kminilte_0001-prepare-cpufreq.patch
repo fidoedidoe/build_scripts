@@ -1,0 +1,33 @@
+From ba57ae39df8ad9f175b53657539db7d771b76fd7 Mon Sep 17 00:00:00 2001
+From: Markus Reichl <m.reichl@fivetechno.de>
+Date: Mon, 13 May 2019 15:51:56 +0200
+Subject: [PATCH 01/11] prepare cpufreq
+
+Change-Id: I52dcb939dcfe7c9aa156d8423d491587c9ad30bc
+---
+ drivers/cpufreq/exynos3470-cpufreq.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/cpufreq/exynos3470-cpufreq.c b/drivers/cpufreq/exynos3470-cpufreq.c
+index be02a7d386c..22f7bd6b0cf 100644
+--- a/drivers/cpufreq/exynos3470-cpufreq.c
++++ b/drivers/cpufreq/exynos3470-cpufreq.c
+@@ -549,11 +549,11 @@ static int __init set_volt_table(void)
+ 	}
+ 
+ 	if (samsung_rev() >= EXYNOS3470_REV_2_0) {
+-		max_support_idx = L1;
+-		min_support_idx = L11;
+-		exynos3470_freq_table[L12].frequency = CPUFREQ_ENTRY_INVALID;
+-		exynos3470_freq_table[L13].frequency = CPUFREQ_ENTRY_INVALID;
+-		exynos3470_freq_table[L0].frequency = CPUFREQ_ENTRY_INVALID;
++		max_support_idx = L0;
++		min_support_idx = L13;
++		//exynos3470_freq_table[L12].frequency = CPUFREQ_ENTRY_INVALID;
++		//exynos3470_freq_table[L13].frequency = CPUFREQ_ENTRY_INVALID;
++		//exynos3470_freq_table[L0].frequency = CPUFREQ_ENTRY_INVALID;
+ 	} else {
+ 		max_support_idx = L0;
+ 		min_support_idx = L10;
+-- 
+2.11.0
