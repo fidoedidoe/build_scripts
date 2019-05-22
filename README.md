@@ -5,7 +5,7 @@ Collection of `#!/bin/bash` scripts created to help automate the initial build o
 * build_lineage_m9.sh 
 * etc
 
-I have only tested these scripts on my own environment: Gnome Ubuntu 17.04; 16GB RAM; i7-7700HQ; If your environment differs from this then your experience may differ from mine. Setting up your build environment is beyond the scope of this readme, there's lots of good advice / examples out there.
+I have only tested these scripts on my own environment: Gnome Ubuntu 19.04; 16GB RAM; i7-7700HQ; If your environment differs from this then your experience may differ from mine. Setting up your build environment is beyond the scope of this readme, there's lots of good advice / examples out there.
 
 ##### Thanks
 - [spookcity138](https://forum.xda-developers.com/member.php?u=7065337) & [jimmy999x](https://forum.xda-developers.com/member.php?u=7341542). For being open to questions on building for kminilte, taking the time to educate me at each and every tentative step and demonstrating great patience.
