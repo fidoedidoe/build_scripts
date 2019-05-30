@@ -1,12 +1,16 @@
 #!/bin/bash  
 
-WORK_DIRECTORY="$HOME/android/kminilte-16.0"
-SAMPLE_REPO_DIRECTORY='frameworks'
-LOCAL_MANIFESTS_DIRECTORY='.repo/local_manifests'
-REPO_SYNC_THREADS=6
-CLEAN=0
+WORK_DIRECTORY="$HOME/android/kminilte-los-16.0"
+REPO_DIRECTORY='.repo'
+LOCAL_MANIFESTS_FILE='kminilte.xml'
+LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
+REPO_SYNC_THREADS=$(nproc --all)
 LOS_REVISION="lineage-16.0"
 SPOOK_CITY_REVISION="P"
+REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
+#REPO_INIT_FLAGS="--no-clone-bundle"
+REPO_SYNC_FLAGS="--no-tags --no-clone-bundle"
+#REPO_SYNC_FLAGS="--no-clone-bundle"
 
 PROMPT=""
 read -r -p "### (1/7) Start Repo Sync and Build process, first 'repo init' will take hours <Y/n>? (automatically continues unpromted after 5 seconds): " -t 5 -e -i Y PROMPT
@@ -25,16 +29,17 @@ mkdir -p "$WORK_DIRECTORY"
 # Change to working directory
 cd "$WORK_DIRECTORY" || exit
 	
-if [ ! -d "$SAMPLE_REPO_DIRECTORY" ]; then
-  echo "### initialising repo for first time..."
-  mkdir -p "$WORK_DIRECTORY"/"$LOCAL_MANIFESTS_DIRECTORY"
-  rm -rf "$WORK_DIRECTORY"/"$LOCAL_MANIFESTS_DIRECTORY"/*
-  repo init -u https://github.com/LineageOS/android.git -b $LOS_REVISION
+
+if [ ! -d "$WORK_DIRECTORY/$REPO_DIRECTORY" ]; then
+  echo "### initialising LOS repo for first time..."
+  repo init -u https://github.com/LineageOS/android.git -b $LOS_REVISION $REPO_INIT_FLAGS
 else
-  echo "### repo exists, reverting all local modifications..."
+  echo "### LOS Repo exists..."
+  echo "### step 1/1: reverting all local LOS modifications..."
   repo forall -vc "git reset --hard ; git clean -fdx" --quiet
-  CLEAN=1
+  echo "### step 1 - 1: complete"
 fi
+
 
 PROMPT=""
 read -r -p "### (2/7) Continue and sync repo <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
@@ -47,93 +52,15 @@ if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
   exit 1
 fi
 
-echo "### sync repo..."
-repo sync -c --quiet --jobs="$REPO_SYNC_THREADS"
-
-if [ "$CLEAN" -eq "0" ]; then
-  echo "### create local_manifests and rerunning repo sync..."           
-  ##mkdir -p "$WORK_DIRECTORY"/"$LOCAL_MANIFESTS_DIRECTORY"
+if [ ! -d "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY" ]; then
+  echo "### create local_manifests and re-run repo sync..."           
   git clone https://github.com/Spookcity/android_.repo_local_manifests -b $SPOOK_CITY_REVISION .repo/local_manifests
-  repo sync -c --quiet --jobs="$REPO_SYNC_THREADS"
-fi
-
-PROMPT=""
-read -r -p "### (3/7) Initialise/Reinitialse additional local manifests <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
-echo
-if [ -z "$PROMPT" ]; then
-  PROMPT="Y"
-fi
-if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
-  echo "### Response: '$PROMPT', exiting!"
-  exit 1
-fi
-
-echo "### get/reset local manifest..."
-if [ ! -d "$WORK_DIRECTORY/device/samsung/smdk3470-common" ]; then
-  echo '### local manifest directory device/samsung/smdk-common doesnt exist, clone it...'
-  git clone -b $SPOOK_CITY_REVISION https://github.com/Spookcity/android_device_samsung_smdk3470-common device/samsung/smdk3470-common
 else
-  echo "### directory $WORK_DIRECTORY/device/samsung/smdk3470-common exists...runnning: git reset --hard"
-  cd "$WORK_DIRECTORY"/device/samsung/smdk3470-common || exit
-  git reset --hard origin/$SPOOK_CITY_REVISION
-  git clean -fd
-  cd "$WORK_DIRECTORY" || exit
+  echo "### local_manifests exists...skipping."           
 fi
 
-if [ ! -d "$WORK_DIRECTORY/device/samsung/kminilte" ]; then
-  echo '### local manifest directory device/samsung/kminilte doesnt exist, clone it...'
-  git clone -b $SPOOK_CITY_REVISION https://github.com/Spookcity/android_device_samsung_kminilte device/samsung/kminilte
-else
-  echo "### directory $WORK_DIRECTORY/device/samsung/kminilte exists...runnning: git reset --hard"
-  cd "$WORK_DIRECTORY"/device/samsung/kminilte || exit
-  git reset --hard origin/$SPOOK_CITY_REVISION
-  git clean -fd
-  cd "$WORK_DIRECTORY" || exit
-fi
-
-if [ ! -d "$WORK_DIRECTORY/kernel/samsung/kminilte" ]; then
-  echo '### local manifest directory kernel/samsung/kminilte doesnt exist, clone it...'
-  git clone -b $SPOOK_CITY_REVISION https://github.com/Spookcity/android_kernel_samsung_kminilte kernel/samsung/kminilte
-else
-  echo "### directory $WORK_DIRECTORY/kernel/samsung/kminilte exists...runnning: git reset --hard"
-  cd "$WORK_DIRECTORY"/kernel/samsung/kminilte || exit
-  git reset --hard origin/$SPOOK_CITY_REVISION
-  git clean -fd
-  cd "$WORK_DIRECTORY" || exit
-fi
-
-if [ ! -d "$WORK_DIRECTORY/vendor/samsung/kminilte" ]; then
-  echo '### local manifest vendor/samsung/kminilte directory doesnt exist, clone it...'
-  git clone -b $SPOOK_CITY_REVISION https://github.com/Spookcity/android_vendor_samsung_kminilte vendor/samsung/kminilte
-else
-  echo "### directory $WORK_DIRECTORY/vendor/samsung/kminilte exists...runnning: git reset --hard"
-  cd "$WORK_DIRECTORY"/vendor/samsung/kminilte || exit
-  git reset --hard origin/$SPOOK_CITY_REVISION
-  git clean -fd
-  cd "$WORK_DIRECTORY" || exit
-fi
-
-if [ ! -d "$WORK_DIRECTORY/hardware/samsung" ]; then
-  echo '### local manifest directory hardware/samsung doesnt exist, clone it...'
-  git clone -b $SPOOK_CITY_REVISION https://github.com/Spookcity/android_hardware_samsung hardware/samsung
-else
-  echo "### directory $WORK_DIRECTORY/hardware/samsung exists...runnning: git reset --hard"
-  cd "$WORK_DIRECTORY"/hardware/samsung || exit
-  git reset --hard origin/$SPOOK_CITY_REVISION
-  git clean -fd
-  cd "$WORK_DIRECTORY" || exit
-fi
-
-if [ ! -d "$WORK_DIRECTORY/hardware/samsung_slsi/exynos3470" ]; then
-  echo '### local manifest directory hardware/samsung_slsi/exynos3470 doesnt exist, clone it...'
-  git clone -b $SPOOK_CITY_REVISION https://github.com/Spookcity/android_hardware_samsung_slsi_exynos3470 hardware/samsung_slsi/exynos3470
-else
-  echo "### directory $WORK_DIRECTORY/hardware/samsung_slsi/exynos3470 exists...runnning: git reset --hard"
-  cd "$WORK_DIRECTORY"/hardware/samsung_slsi/exynos3470 || exit
-  git reset --hard origin/$SPOOK_CITY_REVISION
-  git clean -fd
-  cd "$WORK_DIRECTORY" || exit
-fi
+echo "### sync repo with $REPO_SYNC_THREADS threads..."
+repo sync -c --quiet --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
 
 PROMPT=""
 read -r -p "### (4/7) Continue and apply device specific patch <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
@@ -150,6 +77,7 @@ fi
 cd "$WORK_DIRECTORY"/device/samsung/smdk3470-common/patch || exit
 ./apply.sh
 cd "$WORK_DIRECTORY" || exit
+
 
 PROMPT=""
 read -r -p "### (5/7) Continue and prepare device specific code <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
@@ -169,11 +97,8 @@ lunch lineage_kminilte-userdebug
 echo "### running croot..."
 croot
 
-echo "### CLEAN variable is: $CLEAN" 
-if [ "$CLEAN" -eq "1" ]; then
-  echo "### clearing old build output"           
-  mka clobber
-fi
+echo "### clearing old build output (if any exists)"           
+mka clobber
 
 cd "$WORK_DIRECTORY" || exit
 
@@ -189,6 +114,9 @@ if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
 fi
 
 cd "$WORK_DIRECTORY"/kernel/samsung/kminilte || exit
+
+echo '### to apply patches need to fetch additional kerenl branches'
+git fetch -all
 
 echo "### apply cpufreq patch provided by PanzerKnakker this initialses the file to prevent merge conflicts when cherry picking, see: https://forum.xda-developers.com/showpost.php?p=79571283&postcount=325"
 git apply ~/android/build_scripts/build_lineage_16-0_kminilte_0001-prepare-cpufreq.patch
@@ -228,6 +156,9 @@ git cherry-pick 429e4d526dc0a4661e376dfe75119aac7d91da97
 echo "### cherry-pick 011 - audit:No logging"
 git cherry-pick 1a9c354552d6bd7f37444ddd61adc46e2f640c17 
 
+exho "### cherry-pick 012 - mm: reduce vm_swappiness"
+git cherry-pick a611985640fe64b9b4189623493e0e5dc4a187ff
+
 cd "$WORK_DIRECTORY" || exit
 
 PROMPT=""
@@ -241,7 +172,7 @@ if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
   exit 1
 fi
 
-echo "### running 'mka bacon'..."
-mka bacon
+echo "### running 'mka bacon with $REPO_SYNC_THREADS threads'..."
+mka bacon -j$REPO_SYNC_THREADS
 
 echo "### End of Build Script ###"
