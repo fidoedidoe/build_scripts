@@ -13,7 +13,7 @@ REPO_SYNC_FLAGS="--no-tags --no-clone-bundle"
 #REPO_SYNC_FLAGS="--no-clone-bundle"
 
 PROMPT=""
-read -r -p "### (1/7) Start Repo Sync and Build process, first 'repo init' will take hours <Y/n>? (automatically continues unpromted after 5 seconds): " -t 5 -e -i Y PROMPT
+read -r -p "### (1/6) Start Repo Sync and Build process, first 'repo init' will take hours <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -42,7 +42,7 @@ fi
 
 
 PROMPT=""
-read -r -p "### (2/7) Continue and sync repo <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (2/6) Continue and sync repo <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -63,7 +63,7 @@ echo "### sync repo with $REPO_SYNC_THREADS threads..."
 repo sync -c --quiet --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
 
 PROMPT=""
-read -r -p "### (4/7) Continue and apply device specific patch <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (3/6) Continue and apply device specific patch <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -80,7 +80,7 @@ cd "$WORK_DIRECTORY" || exit
 
 
 PROMPT=""
-read -r -p "### (5/7) Continue and prepare device specific code <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (4/6) Continue and prepare device specific code <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -103,7 +103,7 @@ mka clobber
 cd "$WORK_DIRECTORY" || exit
 
 PROMPT=""
-read -r -p "### (6/7) Apply kernel optimisations (cherry-pick from SpookCity N_custom kernel optimsations), inspiration and initial patch credited to Panzerknakker)  <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (5/6) Apply kernel optimisations (cherry-pick from SpookCity N_custom kernel optimisations), inspiration and initial patch credited to Panzerknakker)  <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -115,10 +115,10 @@ fi
 
 cd "$WORK_DIRECTORY"/kernel/samsung/kminilte || exit
 
-echo '### to apply patches need to fetch additional kerenl branches'
+echo '### to apply patches need to fetch additional kernel branches'
 git fetch -all
 
-echo "### apply cpufreq patch provided by PanzerKnakker this initialses the file to prevent merge conflicts when cherry picking, see: https://forum.xda-developers.com/showpost.php?p=79571283&postcount=325"
+echo "### apply cpufreq patch provided by PanzerKnakker this initialises the file to prevent merge conflicts when cherry picking, see: https://forum.xda-developers.com/showpost.php?p=79571283&postcount=325"
 git apply ~/android/build_scripts/build_lineage_16-0_kminilte_0001-prepare-cpufreq.patch
 git add drivers/cpufreq/exynos3470-cpufreq.c
 git commit -m "modified to match cherry-pick a20c1790de4d5152d986ca52563f20769c14ab69 start position as origin/P doesn't match origin/N_custom for cpufreq.c on lines 552 and 553"
@@ -147,7 +147,7 @@ git cherry-pick bd7b120e643d9ff129c430fc262a6688d6849e6b
 echo "### cherry-pick 008 - lower arm_max-volt"
 git cherry-pick 1ccd52491ed93f63ab8082bdfae193ac41633df9
 
-echo "### cherry-pick 009 - GPU Optimsations Flags"
+echo "### cherry-pick 009 - GPU Optimisations Flags"
 git cherry-pick d774f273b1aa3d54943d6b814e9b4331eacf2ec0
 
 echo "### cherry-pick 010 - audit: Make logging opt-in via console_loglevel"
@@ -162,7 +162,7 @@ git cherry-pick a611985640fe64b9b4189623493e0e5dc4a187ff
 cd "$WORK_DIRECTORY" || exit
 
 PROMPT=""
-read -r -p "### (7/7) Continue with ROM build process (this step can take more than an hour depending on CC_CACHE) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (6/6) Continue with ROM build process (this step can take more than an hour depending on CC_CACHE) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -175,4 +175,4 @@ fi
 echo "### running 'mka bacon with $REPO_SYNC_THREADS threads'..."
 mka bacon -j$REPO_SYNC_THREADS
 
-echo "### End of Build Script ###"
+echo "### End of Build Script! ###"
