@@ -3,13 +3,13 @@
 WORK_DIRECTORY="$HOME/android/tilapia-aosp-7.1"
 REPO_DIRECTORY='.repo'
 REPO_SYNC_THREADS=$(nproc --all)
-#REPO_SYNC_THREADS="1"
-#AOSP_REVISION="ads-7.1.0"
-AOSP_REVISION="test-7.1.0"
+#GITHUB_USER="AndDiSa"
+GITHUB_USER="fidoedidoe"
+#GITHUB_BRANCH="ads-7.1.0"
+GITHUB_BRANCH="test-7.1.0"
 REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
-#REPO_INIT_FLAGS="--no-clone-bundle"
-REPO_SYNC_FLAGS="--no-tags --no-clone-bundle"
-#REPO_SYNC_FLAGS="--no-clone-bundle"
+REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle"
+#REPO_SYNC_FLAGS="--quiet --force-sync force-broken --no-tags --no-clone-bundle"
 SLEEP_DURATION="1"
 
 PROMPT=""
@@ -31,12 +31,11 @@ cd "$WORK_DIRECTORY" || exit
 	
 
 if [ ! -d "$WORK_DIRECTORY/$REPO_DIRECTORY" ]; then
-  echo "### initialising AOSP repo for first time..."
-  #repo init -u https://github.com/AndDiSa/platform_manifest-Grouper-AOSP.git -b $AOSP_REVISION $REPO_INIT_FLAGS
-  repo init -u https://github.com/fidoedidoe/platform_manifest-Grouper-AOSP.git -b $AOSP_REVISION $REPO_INIT_FLAGS
+  echo "### initialising github repo for first time..."
+  repo init $REPO_INIT_FLAGS -u https://github.com/$GITHUB_USER/platform_manifest-Grouper-AOSP.git -b $GITHUB_BRANCH
 else
-  echo "### LOS Repo exists..."
-  echo "### step 1/1: reverting all local AOSP modifications..."
+  echo "### github Repo exists..."
+  echo "### step 1/1: reverting all local  modifications..."
   repo forall -vc "git reset --hard ; git clean -fdx" --quiet
   echo "### step 1 - 1: complete"
 fi
@@ -53,9 +52,7 @@ if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
 fi
 
 echo "### sync repo with $REPO_SYNC_THREADS threads..."
-#repo sync --quiet --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
-repo sync --quiet --force-sync --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
-#repo sync --quiet --force-broken --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
+repo sync --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
 
 PROMPT=""
 read -r -p "### (3/6) Continue and apply device specific patch <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
