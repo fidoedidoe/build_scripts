@@ -24,7 +24,40 @@ I have only tested these scripts on my own environment: Gnome Ubuntu 19.04; 16GB
 - you have a folder structure `~/android/build_scripts`
 
 
-###### Step 1 - Install the script: 
+###### Step 1 - Setup/Configure Compiler Cache (ccache)
+Having ccache setup and configured correctly will significantly speed up subsequent compile times. In my environment I've seen compile times drop from ~90 minutes, to ~25 minutes and down to just 5 minutes under certain conditions. Your mileage may vary.
+
+Install ccache (Ubuntu)
+````
+sudo apt-get install ccache
+````
+Configure environment variables, by editing `~/.bashrc` and adding the following at the bottom of the script
+````
+export USE_CCACHE=1
+export CCACHE_DIR="$HOME/.ccache" # Set Compile Cache location
+export CCACHE_SIZE="15G" # Set compile cache size (increase as necessary)
+export CCACHE_COMPRESS=1 # Save space in compile cache
+export CCACHE_EXEC="/usr/bin/ccache"
+````
+Reload bashrc to incorporate above change
+````
+source ~/.bashrc
+````
+The stats for the cache can be seen using `ccache -s`, the stats (such as cache hit success) will improve over time. 
+
+
+###### Step 2 - configure Jacks Server to use 4GB memory (mitigates OOM Error)
+
+Configure environment variables, by editing `~/.bashrc` and adding the following at the bottom of the script
+````
+export ANDROID_JACK_VM_ARGS="-Xmx4g -Dfile.encoding=UTF-8 -XX:+TieredCompilation"
+````
+Reload bashrc to incorporate above change
+````
+source ~/.bashrc
+````
+
+###### Step 3 - Install the build script: 
 Ensure the script (named: `build_slimrom7_kminilte.sh`) is located in the following folder
 ```
 ~/android/build_scripts
@@ -34,8 +67,7 @@ Make sure the script has execute permissions
 chmod ug+x ~/android/build_scripts/build_slimrom7_kminilte.sh
 ```
 
-
-###### Step 2 - Validate script variables:
+###### Step 4 - Validate script variables:
 Open the the file and validate the variable defaults such as: `WORK_DIRECTORY; SLIM_REVISION; REPO_SYNC_THREADS, etc etc`, are appropriate for your intended build version and folder structure and hardware/broadband capability, ie: 
 ```
 vi ~/android/build_scripts/build_slimrom7_kminilte.sh
@@ -49,7 +81,7 @@ LOS_REVISION="cm-14.1"
 ...
 ```
 
-###### Step 3 - Execute Script:
+###### Step 5 - Execute Script:
 Change the the script directory and execute the script:  
 ```
 cd ~/android/build_scripts
