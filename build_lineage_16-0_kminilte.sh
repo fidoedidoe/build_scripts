@@ -1,19 +1,25 @@
 #!/bin/bash  
 
+VANITY_DEVICE_TAG="S5 Mini (kminilte)"
 WORK_DIRECTORY="$HOME/android/kminilte-los-16.0"
 REPO_DIRECTORY='.repo'
 LOCAL_MANIFESTS_FILE='kminilte.xml'
 LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
+#REPO_SYNC_THREADS="4"
 REPO_SYNC_THREADS=$(nproc --all)
 LOS_REVISION="lineage-16.0"
 SPOOK_CITY_REVISION="P"
 REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 #REPO_INIT_FLAGS="--no-clone-bundle"
-REPO_SYNC_FLAGS="--no-tags --no-clone-bundle"
-#REPO_SYNC_FLAGS="--no-clone-bundle"
+REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle"
+#REPO_SYNC_FLAGS="--quiet --force-sync --force-broken --no-tags --no-clone-bundle"
+
+echo "###"
+echo "### Start of build script for: $VANITY_DEVICE_TAG" 
+echo "###"
 
 PROMPT=""
-read -r -p "### (1/6) Start Repo Sync and Build process, first 'repo init' will take hours <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
+read -r -p "### (1/6) Initialise LOS Repo and manifest <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -31,10 +37,10 @@ cd "$WORK_DIRECTORY" || exit
 	
 
 if [ ! -d "$WORK_DIRECTORY/$REPO_DIRECTORY" ]; then
-  echo "### initialising LOS repo for first time..."
+  echo "### initialising LOS repo/manifests for first time..."
   repo init -u https://github.com/LineageOS/android.git -b $LOS_REVISION $REPO_INIT_FLAGS
 else
-  echo "### LOS Repo exists..."
+  echo "### LOS repo/manifests exists..."
   echo "### step 1/1: reverting all local LOS modifications..."
   repo forall -vc "git reset --hard ; git clean -fdx" --quiet
   echo "### step 1 - 1: complete"
@@ -42,7 +48,7 @@ fi
 
 
 PROMPT=""
-read -r -p "### (2/6) Continue and sync repo <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (2/6) Continue with git clone 'local_manifests' and sync repo (initial sync will take an age) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -53,14 +59,15 @@ if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
 fi
 
 if [ ! -d "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY" ]; then
-  echo "### create local_manifests and re-run repo sync..."           
+  echo "### create 'local_manifest' and re-run repo sync..."           
   git clone https://github.com/Spookcity/android_.repo_local_manifests -b $SPOOK_CITY_REVISION .repo/local_manifests
 else
-  echo "### local_manifests exists...skipping."           
+  echo "### local_manifest exists...skipping."           
 fi
 
 echo "### sync repo with $REPO_SYNC_THREADS threads..."
-repo sync -c --quiet --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
+#repo sync -c --quiet --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
+repo sync --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
 
 PROMPT=""
 read -r -p "### (3/6) Continue and apply device specific patch <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
@@ -80,7 +87,7 @@ cd "$WORK_DIRECTORY" || exit
 
 
 PROMPT=""
-read -r -p "### (4/6) Continue and prepare device specific code <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (4/6) Continue and prepare device specific code for: $VANITY_DEVICE_TAG <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -115,8 +122,8 @@ fi
 
 cd "$WORK_DIRECTORY"/kernel/samsung/kminilte || exit
 
-echo '### to apply patches need to fetch additional kernel branches'
-git fetch -all
+echo "### to apply the cherry-pick's we need to git fetch the 'N_custom' branch"
+git fetch github N_custom
 
 echo "### apply cpufreq patch provided by PanzerKnakker this initialises the file to prevent merge conflicts when cherry picking, see: https://forum.xda-developers.com/showpost.php?p=79571283&postcount=325"
 git apply ~/android/build_scripts/build_lineage_16-0_kminilte_0001-prepare-cpufreq.patch
@@ -162,7 +169,7 @@ git cherry-pick a611985640fe64b9b4189623493e0e5dc4a187ff
 cd "$WORK_DIRECTORY" || exit
 
 PROMPT=""
-read -r -p "### (6/6) Continue with ROM build process (this step can take more than an hour depending on CC_CACHE) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (6/6) Continue with $VANITY_DEVICE_TAG ROM build process (this step can take some time depending on CC_CACHE) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -175,4 +182,4 @@ fi
 echo "### running 'mka bacon with $REPO_SYNC_THREADS threads'..."
 mka bacon -j$REPO_SYNC_THREADS
 
-echo "### End of Build Script! ###"
+echo "### End of Build Script for $VANITY_DEVICE_TAG! ###"
