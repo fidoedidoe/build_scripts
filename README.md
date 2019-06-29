@@ -11,7 +11,7 @@ I have only tested these scripts on my own environment: Gnome Ubuntu 19.04; 16GB
 ##### Thanks
 - [spookcity138](https://forum.xda-developers.com/member.php?u=7065337) & [jimmy999x](https://forum.xda-developers.com/member.php?u=7341542). For being open to questions on building for kminilte, taking the time to educate me at each and every tentative step and demonstrating great patience.
 - [flyhalf205](https://forum.xda-developers.com/member.php?u=3082717) for advice on building for Lineage 15 on M9.
-- [anddisa] (https://forum.xda-developers.com/member.php?u=2188693) For being open to questions on building for grouper/tilapia and demonstrating great patience.
+- [anddisa](https://forum.xda-developers.com/member.php?u=2188693) For being open to questions on building for grouper/tilapia and demonstrating great patience.
 
 ## build_slimrom7_kminilte.sh
 
