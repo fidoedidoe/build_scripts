@@ -19,6 +19,7 @@ I have only tested these scripts on my own environment: Gnome Ubuntu 19.04; 16GB
 - [spookcity138](https://forum.xda-developers.com/member.php?u=7065337)
 - [jimmy999x](https://forum.xda-developers.com/member.php?u=7341542)
 - [anddisa](https://forum.xda-developers.com/member.php?u=2188693)
+- [walter79](https://forum.xda-developers.com/member.php?u=382340)
 
 ### How to execute the build script
 
