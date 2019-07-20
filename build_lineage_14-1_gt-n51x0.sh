@@ -1,6 +1,5 @@
 #!/bin/bash  
 
-
 ###
 ### USAGE: 
 ### ./build_lineage_14-1_GT-N51X0.sh <device>
@@ -23,8 +22,6 @@ REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle"
 CLONE_FLAGS="--depth 1"
 BUILD_WITH_TWRP="false"
 SLEEP_DURATION="1"
-#Add some additional TWRP driectives to correct screen orientation/touch orientation touch issues plus a few other directives (cherrypicked from TWRPBuilder project source) 
-INSERT_TEXT="BOARD_SUPPRESS_SECURE_ERASE := true \nBOARD_HAS_NO_MISC_PARTITION := true \nBOARD_RECOVERY_SWIPE := true \nBOARD_USES_MMCUTILS := true \nBOARD_SUPPRESS_EMMC_WIPE := true \nBOARD_HAS_FLIPPED_SCREEN := false \nRECOVERY_TOUCHSCREEN_FLIP_X := true \nRECOVERY_TOUCHSCREEN_FLIP_Y := true \nRECOVERY_TOUCHSCREEN_SWAP_XY := true \nTW_THEME := landscape_hdpi"
 
 echo "###"
 echo "### Start of build script" 
@@ -60,9 +57,9 @@ if [ -z "$PROMPT" ]; then
 fi
 if [[ $PROMPT = "2" ]]; then
   BUILD_WITH_TWRP="true"
-  MANIFEST_BRANCH="twrp-14.1"
   echo "### Setting up for Recovery Build..."
 else
+  BUILD_WITH_TWRP="false"
   echo "### Setting up for Full ROM build..."
 fi
 
@@ -108,12 +105,10 @@ fi
 if [ ! -d "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY" ]; then
   echo "### create 'local_manifest' and re-run repo sync..."           
   mkdir -p "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"
+  git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/android_.repo_local_manifests_gt-n51x0 -b $MANIFEST_BRANCH .repo/local_manifests
 else
-  echo "### Git wont run in an unempty directory, purging..."
-  rm -rf "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"
-  mkdir -p "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"
+  echo "### $LOCAL_MANIFESTS_DIRECTORY already exists, skipping git clone"
 fi
-git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/android_.repo_local_manifests_gt-n51x0 -b $MANIFEST_BRANCH .repo/local_manifests
 
 echo "### sync repo with $REPO_SYNC_THREADS threads..."
 repo sync --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
@@ -136,18 +131,9 @@ export LC_ALL=C
 echo "### set TWRP build directive and enable CONFIG_KERNEL_LZMA as necessary"
 export WITH_TWRP=$BUILD_WITH_TWRP
 
-if [[ $BUILD_WITH_TWRP = "true" ]]; then
-
-   echo '### enable CONFIG_RD_LZMA in lineageos_"$DEVICE_NAME"_defconfig'
-   sed -i 's/# CONFIG_RD_LZMA is not set/CONFIG_RD_LZMA=y/g' "$WORK_DIRECTORY"/kernel/samsung/smdk4412/arch/arm/configs/lineageos_"$DEVICE_NAME"_defconfig
-
-   echo '### adding additional TWRP directives to twrp.mk'
-   eval "sed -i 's/^TW_THEME := portrait_hdpi/$INSERT_TEXT/g' $WORK_DIRECTORY/device/samsung/smdk4412-common/twrp/twrp.mk"
-
-fi
-
 echo "### prepare device specific code..."
 source build/envsetup.sh
+breakfast $DEVICE_NAME
 
 echo "### running croot..."
 croot
@@ -171,6 +157,11 @@ fi
 cd "$WORK_DIRECTORY"/frameworks/base || exit
 echo "### applying patch device/samsung/n5100/patch/note-8-nougat-mtp-crash.patch"
 patch -p 1 < ../../device/samsung/n5100/patch/note-8-nougat-mtp-crash.patch
+sleep $SLEEP_DURATION
+
+cd "$WORK_DIRECTORY"/external/wpa_supplicant_8/wpa_supplicant || exit
+echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0001_external_wpa-supplicant-8_wpa-supplicant_wpa-supplicant-template.patch"
+patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0001_external_wpa-supplicant-8_wpa-supplicant_wpa-supplicant-template.patch
 sleep $SLEEP_DURATION
 
 cd "$WORK_DIRECTORY" || exit
