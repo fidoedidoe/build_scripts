@@ -20,7 +20,6 @@ MANIFEST_BRANCH="cm-14.1"
 REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle"
 CLONE_FLAGS="--depth 1"
-BUILD_WITH_TWRP="false"
 SLEEP_DURATION="1"
 
 echo "###"
@@ -50,21 +49,21 @@ echo "### Building for: $VANITY_DEVICE_TAG"
 echo "###"
 
 PROMPT=""
-read -r -p "### (1/6) Which build type? (1) Full Rom build, (2) Only (TWRP) Recovery. <1/2>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i 1 PROMPT
+read -r -p "### (1/6) Which build type? (1) Full LineageOS Rom build, (2) Only TWRP Recovery build. <1/2>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i 1 PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="1"
 fi
 if [[ $PROMPT = "2" ]]; then
   BUILD_WITH_TWRP="true"
-  echo "### Setting up for Recovery Build..."
+  echo "### Preparing for TWRP Recovery Build..."
 else
   BUILD_WITH_TWRP="false"
-  echo "### Setting up for Full ROM build..."
+  echo "### Preparing for Full LineageOS ROM build..."
 fi
 
 PROMPT=""
-read -r -p "### (2/6) Initialise LOS Repo and manifest <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
+read -r -p "### (2/6) Initialise/Re-base LOS Repo's <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -92,7 +91,7 @@ else
 fi
 
 PROMPT=""
-read -r -p "### (3/6) Continue with repo sync (initial sync will take an age) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (3/6) Initialise local_manifest and perform repo sync (initial repo sync sync will take an age) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -115,7 +114,7 @@ repo sync --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
 
 
 PROMPT=""
-read -r -p "### (4/6) Continue and prepare device specific code for: $VANITY_DEVICE_TAG <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (4/6) Prepare device specific code for: $VANITY_DEVICE_TAG <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -131,7 +130,7 @@ export LC_ALL=C
 echo "### set TWRP build directive and enable CONFIG_KERNEL_LZMA as necessary"
 export WITH_TWRP=$BUILD_WITH_TWRP
 
-echo "### prepare device specific code..."
+echo "### preparing device specific code..."
 source build/envsetup.sh
 breakfast $DEVICE_NAME
 
@@ -168,7 +167,7 @@ cd "$WORK_DIRECTORY" || exit
 
 
 PROMPT=""
-read -r -p "### (6/6) Continue with $VANITY_DEVICE_TAG build process (this step can take some time depending on CC_CACHE) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (6/6) Start $VANITY_DEVICE_TAG build process (this step can take some time depending on CC_CACHE) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
