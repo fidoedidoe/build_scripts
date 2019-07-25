@@ -10,6 +10,10 @@
 ### you may need to modify the variables below to better suit your personal build environment 
 ###
 
+#############
+# Variable(s)
+#############
+
 WORK_DIRECTORY="$HOME/android/gt-n51x0-los-14.1"
 REPO_DIRECTORY='.repo'
 LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
@@ -22,6 +26,18 @@ REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle"
 CLONE_FLAGS="--depth 1"
 SLEEP_DURATION="1"
 
+#############
+# Function(s)
+#############
+
+unsupported_response () {
+  echo "### Response: '$1' is not supported, exiting!"
+  exit 1
+}
+
+#####################
+# Main body of script
+#####################
 echo "###"
 echo "### Start of build script" 
 
@@ -49,17 +65,27 @@ echo "### Building for: $VANITY_DEVICE_TAG"
 echo "###"
 
 PROMPT=""
-read -r -p "### (1/6) Which build type? (1) Full LineageOS Rom build, (2) Only TWRP Recovery build. <1/2>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i 1 PROMPT
+echo "### (1/6) Which build type (ROM, Recovery, Kernel? "
+echo "###       #1. Full LineageOS 14.1 Build"
+echo "###       #2. TWRP Recovery Only"
+echo "###       #3. LineageOS Kernel Only"
+read -r -p "### Enter build choice <1/2/3>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i 1 PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="1"
 fi
-if [[ $PROMPT = "2" ]]; then
-  BUILD_WITH_TWRP="true"
-  echo "### Preparing for TWRP Recovery Build..."
+
+if [[ "$PROMPT" =~ ^(1|2|3)$ ]]; then
+  case "$PROMPT" in
+   "1") echo "### Selected: Full LineageOS ROM build..."
+        BUILD_TYPE="full";;
+   "2") echo "### Selected: TWRP Recovery Build..."
+        BUILD_TYPE="recovery";;
+   "3") echo "### Selected LineageOS Kernel Build..."
+        BUILD_TYPE="kernel";;    
+  esac	  
 else
-  BUILD_WITH_TWRP="false"
-  echo "### Preparing for Full LineageOS ROM build..."
+  unsupported_response $PROMPT
 fi
 
 PROMPT=""
@@ -69,8 +95,7 @@ if [ -z "$PROMPT" ]; then
   PROMPT="Y"
 fi
 if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
-  echo "### Response: '$PROMPT', exiting!"
-  exit 1
+  unsupported_response $PROMPT
 fi
 
 #Ensure working directory exists
@@ -97,8 +122,7 @@ if [ -z "$PROMPT" ]; then
   PROMPT="Y"
 fi
 if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
-  echo "### Response: '$PROMPT', exiting!"
-  exit 1
+  unsupported_response $PROMPT
 fi
 
 if [ ! -d "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY" ]; then
@@ -120,25 +144,25 @@ if [ -z "$PROMPT" ]; then
   PROMPT="Y"
 fi
 if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
-  echo "### Response: '$PROMPT', exiting!"
-  exit 1
+  unsupported_response $PROMPT
 fi
 
-echo "### set environment var to stop issues with prebuilts/misc/.../flex"
-export LC_ALL=C
+#The following is unecessary for kernel build
+if [[ ! $BUILD_TYPE = ^[kernel]$ ]]; then
 
-echo "### set TWRP build directive and enable CONFIG_KERNEL_LZMA as necessary"
-export WITH_TWRP=$BUILD_WITH_TWRP
+   echo "### set environment var to stop issues with prebuilts/misc/.../flex"
+   export LC_ALL=C
 
-echo "### preparing device specific code..."
-source build/envsetup.sh
-breakfast $DEVICE_NAME
+   echo "### preparing device specific code..."
+   source build/envsetup.sh
+   breakfast $DEVICE_NAME
 
-echo "### running croot..."
-croot
+   echo "### running croot..."
+   croot
 
-echo "### clearing old build output (if any exists)"           
-mka clobber
+   echo "### clearing old build output (if any exists)"           
+   mka clobber
+fi
 
 cd "$WORK_DIRECTORY" || exit
 
@@ -149,8 +173,7 @@ if [ -z "$PROMPT" ]; then
   PROMPT="Y"
 fi
 if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
-  echo "### Response: '$PROMPT', exiting!"
-  exit 1
+  unsupported_response $PROMPT
 fi
 
 cd "$WORK_DIRECTORY"/frameworks/base || exit
@@ -174,17 +197,25 @@ if [ -z "$PROMPT" ]; then
 fi
 if [[ $PROMPT =~ ^[Yy]$ ]]; then
    PROMPT=""
-   if [[ $BUILD_WITH_TWRP = "true" ]]; then
-       echo "### running 'mka recoveryimage..."
-       mka recoveryimage
-   else
-       echo "### running 'brunch $DEVICE_NAME..."
-       #mka bacon -j$REPO_SYNC_THREADS
-       brunch $DEVICE_NAME
-   fi
+   case "$BUILD_TYPE" in
+    "full")     echo "### Starting $BUILD_TYPE build, running 'brunch $DEVICE_NAME'..."
+                brunch $DEVICE_NAME;;
+
+    "recovery") echo "### Starting $BUILD_TYPE build, running 'mka recoveryimage'..."
+                export WITH_TWRP="true"
+                mka recoveryimage;;
+
+    "kernel")   echo "### Starting $BUILD_TYPE build..."
+                export CROSS_COMPILE="$WORK_DIRECTORY"/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi-
+                cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/ || exit
+                mkdir -p "$WORK_DIRECTORY"/out
+	        make O="$WORK_DIRECTORY"/out clean
+                make O="$WORK_DIRECTORY"/out mrproper
+                make O="$WORK_DIRECTORY"/out lineageos_n5110_defconfig
+                make O="$WORK_DIRECTORY"/out -j$(nproc --all);;
+   esac
 else
-   echo "### Response: '$PROMPT', exiting!"
-   exit 1
+   unsupported_response $PROMPT
 fi
 
 echo "### End of Build Script for $VANITY_DEVICE_TAG! ###"
