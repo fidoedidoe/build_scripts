@@ -14,17 +14,20 @@
 # Variable(s)
 #############
 
-WORK_DIRECTORY="$HOME/android/gt-n51x0-los-14.1"
+LOS_PREFIX="cm"
+LOS_VERSION="14.1"
+WORK_DIRECTORY="$HOME/android/gt-n51x0-los-$LOS_VERSION"
 REPO_DIRECTORY='.repo'
 LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
 REPO_SYNC_THREADS=$(nproc --all)
-LOS_REVISION="cm-14.1"
+LOS_REVISION="$LOS_PREFIX-$LOS_VERSION"
 GITHUB_REPO="fidoedidoe"
-MANIFEST_BRANCH="cm-14.1"
+MANIFEST_BRANCH="$LOS_PREFIX-$LOS_VERSION"
 REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle"
 CLONE_FLAGS="--depth 1"
 SLEEP_DURATION="1"
+NOW=$(date +"%Y%m%d")
 
 #############
 # Function(s)
@@ -66,7 +69,7 @@ echo "###"
 
 PROMPT=""
 echo "### (1/6) Which build type (ROM, Recovery, Kernel? "
-echo "###       #1. Full LineageOS 14.1 Build"
+echo "###       #1. Full LineageOS $LOS_VERSION Build"
 echo "###       #2. TWRP Recovery Only"
 echo "###       #3. LineageOS Kernel Only"
 read -r -p "### Enter build choice <1/2/3>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i 1 PROMPT
@@ -148,7 +151,7 @@ if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
 fi
 
 #The following is unecessary for kernel build
-if [[ ! $BUILD_TYPE = ^[kernel]$ ]]; then
+if [[ ! $BUILD_TYPE = "kernel" ]]; then
 
    echo "### set environment var to stop issues with prebuilts/misc/.../flex"
    export LC_ALL=C
@@ -203,16 +206,31 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
 
     "recovery") echo "### Starting $BUILD_TYPE build, running 'mka recoveryimage'..."
                 export WITH_TWRP="true"
-                mka recoveryimage;;
+                mka recoveryimage
+                cd "$WORK_DIRECTORY"/out/target/product/n5110/ || exit 
+                mv recovery.img twrp-$DEVICE_NAME-$NOW.img
+                echo "### TWRP flashable image name: twrp-$DEVICE_NAME-$NOW.img";;
 
     "kernel")   echo "### Starting $BUILD_TYPE build..."
                 export CROSS_COMPILE="$WORK_DIRECTORY"/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi-
+		export ARCH=arm
+		export SUBARCH=arm
                 cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/ || exit
                 mkdir -p "$WORK_DIRECTORY"/out
 	        make O="$WORK_DIRECTORY"/out clean
                 make O="$WORK_DIRECTORY"/out mrproper
                 make O="$WORK_DIRECTORY"/out lineageos_n5110_defconfig
-                make O="$WORK_DIRECTORY"/out -j$(nproc --all);;
+                make O="$WORK_DIRECTORY"/out -j$(nproc --all)
+                cp "$WORK_DIRECTORY"/out/arch/arm/boot/zImage "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3
+                echo "### building flashable anykernel3 zip file...."
+                cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3
+                zip -r9 kernel.zip * -x .git README.md *placeholder kernel.zip
+                rm zImage
+                mv kernel.zip "$WORK_DIRECTORY"/out/arch/arm/boot/
+                cd "$WORK_DIRECTORY"/out/arch/arm/boot/
+                mv kernel.zip lineage-$LOS_VERSION-GT-$DEVICE_NAME-kernel.$NOW.zip
+                echo "### flashable zip created at: $WORK_DIRECTORY/out/arch/arm/boot/"
+                echo "### flashable zip named: lineage-$LOS_VERSION-GT-$DEVICE_NAME-kernel.$NOW.zip";;
    esac
 else
    unsupported_response $PROMPT
