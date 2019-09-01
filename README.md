@@ -4,6 +4,7 @@ Collection of `#!/bin/bash` scripts created to help automate the initial build o
 * build_lineage_16-0_kminilte.sh
 * build_lineage_m9.sh
 * build_aosp_7-1-0_nexus7.sh
+* build_lineage_14-1_gt-n51x0.sh {N5100|N5110|N5120}
 * etc
 
 I have only tested these scripts on my own environment: Gnome Ubuntu 19.04; 16GB RAM; i7-7700HQ; If your environment differs from this then your experience may differ from mine. Setting up your build environment is beyond the scope of this readme, there's lots of good advice / examples out there.
