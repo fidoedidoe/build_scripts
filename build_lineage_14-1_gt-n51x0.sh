@@ -16,6 +16,7 @@
 
 LOS_PREFIX="cm"
 LOS_VERSION="14.1"
+LINARO_VERSION="linaro-7.4.1-gnueabihf"
 WORK_DIRECTORY="$HOME/android/gt-n51x0-los-$LOS_VERSION"
 REPO_DIRECTORY='.repo'
 LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
@@ -27,6 +28,11 @@ REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle"
 CLONE_FLAGS="--depth 1"
 SLEEP_DURATION="1"
+# there's no longer the need to use a local dir for custom toolchain. 
+# Roomservice.xml removes the standard 4.8 prebuilt,  
+# replacing the same directory with this toolchain: linaro 7.4.1 optimised for armv7-a cortext neon softfp 
+KERNEL_CROSS_COMPILE=""$WORK_DIRECTORY"/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-linux-androideabi-"
+#KERNEL_CROSS_COMPILE=""$WORK_DIRECTORY"/../toolchain/arm-linux-androideabi-linaro-7.x-cortex-a9/arm-linux-androideabi-"
 NOW=$(date +"%Y%m%d")
 
 #############
@@ -34,7 +40,7 @@ NOW=$(date +"%Y%m%d")
 #############
 
 unsupported_response () {
-  echo "### Response: '$1' is not supported, exiting!"
+  echo "### Response: '$1' entered, only (Y/y) proceeds....exiting script!"
   exit 1
 }
 
@@ -44,7 +50,7 @@ unsupported_response () {
 echo "###"
 echo "### Start of build script" 
 
-if [[ ! -z "$1" ]]; then
+if [[ -n "$1" ]]; then
   DEVICE_NAME="${1^^}"
   if [[ "$DEVICE_NAME" =~ ^(N5100|N5110|N5120)$ ]]; then
      echo "###"
@@ -88,7 +94,7 @@ if [[ "$PROMPT" =~ ^(1|2|3)$ ]]; then
         BUILD_TYPE="kernel";;    
   esac	  
 else
-  unsupported_response $PROMPT
+  unsupported_response "$PROMPT"
 fi
 
 PROMPT=""
@@ -98,7 +104,7 @@ if [ -z "$PROMPT" ]; then
   PROMPT="Y"
 fi
 if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
-  unsupported_response $PROMPT
+  unsupported_response "$PROMPT"
 fi
 
 #Ensure working directory exists
@@ -125,19 +131,19 @@ if [ -z "$PROMPT" ]; then
   PROMPT="Y"
 fi
 if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
-  unsupported_response $PROMPT
+  unsupported_response "$PROMPT"
 fi
 
 if [ ! -d "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY" ]; then
   echo "### create 'local_manifest' and re-run repo sync..."           
   mkdir -p "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"
-  git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/android_.repo_local_manifests_gt-n51x0 -b $MANIFEST_BRANCH .repo/local_manifests
+  git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/android_.repo_local_manifests_gt-n51x0 -b "$MANIFEST_BRANCH" .repo/local_manifests
 else
   echo "### $LOCAL_MANIFESTS_DIRECTORY already exists, skipping git clone"
 fi
 
 echo "### sync repo with $REPO_SYNC_THREADS threads..."
-repo sync --jobs="$REPO_SYNC_THREADS" $REPO_SYNC_FLAGS
+repo sync --jobs=$REPO_SYNC_THREADS $REPO_SYNC_FLAGS
 
 
 PROMPT=""
@@ -147,11 +153,26 @@ if [ -z "$PROMPT" ]; then
   PROMPT="Y"
 fi
 if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
-  unsupported_response $PROMPT
+  unsupported_response "$PROMPT"
 fi
 
 #The following is unecessary for kernel build
 if [[ ! $BUILD_TYPE = "kernel" ]]; then
+
+   #In order to build a full rom with the kernwl cm-14.1-custom branch
+   #the toolchain specific optimisations need to be revoked (from Makefile). Easiest 
+   #method to do this was to revert to an earlier version of the impacted file(s)
+   #from commit "O3 plus lots of optimization flags"    
+
+   #echo "### we're building "$BUILD_TYPE", revert build flag optimisations in Makefile"
+   cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412 || exit
+
+   #we only got cm-14.1-custom earlier. now get standard cm-14.1 branch 
+   git fetch github cm-14.1
+
+   git checkout github/cm-14.1 -- Makefile
+
+   cd "$WORK_DIRECTORY" || exit
 
    echo "### set environment var to stop issues with prebuilts/misc/.../flex"
    export LC_ALL=C
@@ -165,6 +186,8 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
 
    echo "### clearing old build output (if any exists)"           
    mka clobber
+else
+   echo "### Building kernel, nothing to do here!"           
 fi
 
 cd "$WORK_DIRECTORY" || exit
@@ -176,7 +199,7 @@ if [ -z "$PROMPT" ]; then
   PROMPT="Y"
 fi
 if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
-  unsupported_response $PROMPT
+  unsupported_response "$PROMPT"
 fi
 
 cd "$WORK_DIRECTORY"/frameworks/base || exit
@@ -188,6 +211,13 @@ cd "$WORK_DIRECTORY"/external/wpa_supplicant_8/wpa_supplicant || exit
 echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0001_external_wpa-supplicant-8_wpa-supplicant_wpa-supplicant-template.patch"
 patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0001_external_wpa-supplicant-8_wpa-supplicant_wpa-supplicant-template.patch
 sleep $SLEEP_DURATION
+
+#The following is only necessary for full build
+if [[ $BUILD_TYPE = "full" ]]; then
+cd "$WORK_DIRECTORY" || exit
+  echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0002-custom-toolchain-optimisation.patch"
+  patch -p 1 < $LOCAL_MANIFESTS_DIRECTORY/0002-custom-toolchain-optimisation.patch
+fi
 
 cd "$WORK_DIRECTORY" || exit
 
@@ -208,32 +238,34 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 export WITH_TWRP="true"
                 mka recoveryimage
                 cd "$WORK_DIRECTORY"/out/target/product/n5110/ || exit 
-                mv recovery.img twrp-$DEVICE_NAME-$NOW.img
+                mv recovery.img twrp-"$DEVICE_NAME"-"$NOW".img
                 echo "### TWRP flashable image name: twrp-$DEVICE_NAME-$NOW.img";;
 
     "kernel")   echo "### Starting $BUILD_TYPE build..."
-                export CROSS_COMPILE="$WORK_DIRECTORY"/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi-
+                export CROSS_COMPILE="$KERNEL_CROSS_COMPILE"
 		export ARCH=arm
 		export SUBARCH=arm
                 cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/ || exit
                 mkdir -p "$WORK_DIRECTORY"/out
+                echo "CROSS_COMPILE: $CROSS_COMPILE"
+                echo "defconfig: lineageos_"$DEVICE_NAME"_defconfig"
 	        make O="$WORK_DIRECTORY"/out clean
                 make O="$WORK_DIRECTORY"/out mrproper
-                make O="$WORK_DIRECTORY"/out lineageos_n5110_defconfig
-                make O="$WORK_DIRECTORY"/out -j$(nproc --all)
+                make O="$WORK_DIRECTORY"/out lineageos_"$DEVICE_NAME"_defconfig
+                make O="$WORK_DIRECTORY"/out -j"$REPO_SYNC_THREADS"
                 cp "$WORK_DIRECTORY"/out/arch/arm/boot/zImage "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3
                 echo "### building flashable anykernel3 zip file...."
-                cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3
+                cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3 || exit
                 zip -r9 kernel.zip * -x .git README.md *placeholder kernel.zip
                 rm zImage
                 mv kernel.zip "$WORK_DIRECTORY"/out/arch/arm/boot/
-                cd "$WORK_DIRECTORY"/out/arch/arm/boot/
-                mv kernel.zip lineage-$LOS_VERSION-GT-$DEVICE_NAME-kernel.$NOW.zip
+                cd "$WORK_DIRECTORY"/out/arch/arm/boot/ || exit
+                mv kernel.zip GT-"$DEVICE_NAME"-kernel-los"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip
                 echo "### flashable zip created at: $WORK_DIRECTORY/out/arch/arm/boot/"
-                echo "### flashable zip named: lineage-$LOS_VERSION-GT-$DEVICE_NAME-kernel.$NOW.zip";;
+                echo "### flashable zip named: GT-"$DEVICE_NAME"-kernel-los"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip";;
    esac
 else
-   unsupported_response $PROMPT
+   unsupported_response "$PROMPT"
 fi
 
 echo "### End of Build Script for $VANITY_DEVICE_TAG! ###"
