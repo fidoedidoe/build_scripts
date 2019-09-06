@@ -224,7 +224,7 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 rm zImage
                 mv kernel.zip "$WORK_DIRECTORY"/out/arch/arm/boot/
                 cd "$WORK_DIRECTORY"/out/arch/arm/boot/ || exit
-                mv kernel.zip lineage-"$LOS_VERSION"-"$DEVICE_NAME"-kernel.P_custom."$NOW".zip
+                mv kernel.zip "$LOS_REVISION"-"$DEVICE_NAME"-kernel.P_custom."$NOW".zip
                 echo "### flashable zip created at: $WORK_DIRECTORY/out/arch/arm/boot/"
                 echo "### flashable zip named: $LOS_REVISION-$DEVICE_NAME-kernel.P_custom.$NOW.zip";;
    esac
