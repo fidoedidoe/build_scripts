@@ -28,11 +28,7 @@ REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle"
 CLONE_FLAGS="--depth 1"
 SLEEP_DURATION="1"
-# there's no longer the need to use a local dir for custom toolchain. 
-# Roomservice.xml removes the standard 4.8 prebuilt,  
-# replacing the same directory with this toolchain: linaro 7.4.1 optimised for armv7-a cortext neon softfp 
 KERNEL_CROSS_COMPILE=""$WORK_DIRECTORY"/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-linux-androideabi-"
-#KERNEL_CROSS_COMPILE=""$WORK_DIRECTORY"/../toolchain/arm-linux-androideabi-linaro-7.x-cortex-a9/arm-linux-androideabi-"
 NOW=$(date +"%Y%m%d")
 
 #############
@@ -179,7 +175,7 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
 
    echo "### preparing device specific code..."
    source build/envsetup.sh
-   breakfast $DEVICE_NAME
+   breakfast lineage_$DEVICE_NAME-user
 
    echo "### running croot..."
    croot
@@ -212,12 +208,25 @@ echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0001_external_wpa-supplicant-8_wpa
 patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0001_external_wpa-supplicant-8_wpa-supplicant_wpa-supplicant-template.patch
 sleep $SLEEP_DURATION
 
-#The following is only necessary for full build
-if [[ $BUILD_TYPE = "full" ]]; then
-cd "$WORK_DIRECTORY" || exit
-  echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0002-custom-toolchain-optimisation.patch"
-  patch -p 1 < $LOCAL_MANIFESTS_DIRECTORY/0002-custom-toolchain-optimisation.patch
-fi
+case "$BUILD_TYPE" in
+  "full") cd "$WORK_DIRECTORY" || exit
+          echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0002-custom-toolchain-optimisation.patch"
+          patch -p 1 < $LOCAL_MANIFESTS_DIRECTORY/0002-custom-toolchain-optimisation.patch;;
+  "kernel") 
+          if [[ $DEVICE_NAME = "n5100" ]]; then
+             cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3 || exit
+             echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0003-AnyKernel3-N5100-Device-Names.patch"
+             patch -p 1 < ../../../../$LOCAL_MANIFESTS_DIRECTORY/0003-AnyKernel3-N5100-Device-Names.patch
+             sleep $SLEEP_DURATION
+          fi
+          if [[ $DEVICE_NAME = "n5120" ]]; then
+             cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3 || exit
+             sleep $SLEEP_DURATION
+             echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0004-AnyKernel3-N5120-Device-Names.patch"
+             patch -p 1 < ../../../../$LOCAL_MANIFESTS_DIRECTORY/0004-AnyKernel3-N5120-Device-Names.patch
+             sleep $SLEEP_DURATION
+          fi;;
+esac
 
 cd "$WORK_DIRECTORY" || exit
 
@@ -232,7 +241,7 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
    PROMPT=""
    case "$BUILD_TYPE" in
     "full")     echo "### Starting $BUILD_TYPE build, running 'brunch $DEVICE_NAME'..."
-                brunch $DEVICE_NAME;;
+                brunch lineage_$DEVICE_NAME-user;;
 
     "recovery") echo "### Starting $BUILD_TYPE build, running 'mka recoveryimage'..."
                 export WITH_TWRP="true"
