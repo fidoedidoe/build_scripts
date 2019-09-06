@@ -26,8 +26,8 @@ CLONE_FLAGS="--depth 1"
 REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle"
 #REPO_SYNC_FLAGS="--quiet --force-sync --force-broken --no-tags --no-clone-bundle"
-KERNEL_TOOLCHAIN="$WORK_DIRECTORY/../toolchain/arm-linaro-linux-androideabi/bin"
-KERNEL_CROSS_COMPILE="$KERNEL_TOOLCHAIN/arm-linaro-linux-androideabi-"
+#KERNEL_CROSS_COMPILE="$WORK_DIRECTORY/../toolchain/arm-linaro-linux-androideabi/bin/arm-linaro-linux-androideabi-"
+KERNEL_CROSS_COMPILE=""$WORK_DIRECTORY"/prebuilts/gcc/linux-x86/arm/arm-eabi-7.4/bin/arm-linux-androideabi-"
 NOW=$(date +"%Y%m%d")
 
 #############
@@ -217,7 +217,7 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 make O="$WORK_DIRECTORY"/out mrproper
                 make O="$WORK_DIRECTORY"/out kminilte_00_defconfig
                 make O="$WORK_DIRECTORY"/out -j"$REPO_SYNC_THREADS"
-                cp "$WORK_DIRECTORY"/out/arch/arm/boot/zImage "$WORK_DIRECTORY"/kernel/samsung/kiminilte/AnyKernel2
+                cp "$WORK_DIRECTORY"/out/arch/arm/boot/zImage "$WORK_DIRECTORY"/kernel/samsung/kminilte/AnyKernel2 || exit
                 echo "### building flashable anykernel2 zip file...."
                 cd "$WORK_DIRECTORY"/kernel/samsung/kminilte/AnyKernel2 || exit
                 zip -r9 kernel.zip * -x .git README.md *placeholder kernel.zip
