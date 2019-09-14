@@ -161,13 +161,14 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
 
   cd "$WORK_DIRECTORY"/kernel/samsung/kminilte || exit
 
+  git fetch github P
   git checkout github/P -- Makefile
 
   cd "$WORK_DIRECTORY" || exit
 
   echo "### prepare device specific code..."
   source build/envsetup.sh
-  lunch lineage_kminilte-userdebug
+  lunch lineage_kminilte-user
 
   echo "### running croot..."
   croot
