@@ -13,6 +13,7 @@
 
 DEVICE_NAME="kminilte"
 VANITY_DEVICE_TAG="S5 Mini ($DEVICE_NAME)"
+LINARO_VERSION="linaro-7.4.1-cortex-a9-neon-vfpv4"
 WORK_DIRECTORY="$HOME/android/kminilte-los-16.0"
 REPO_DIRECTORY='.repo'
 LOCAL_MANIFESTS_FILE='$DEVICE_NAME.xml'
@@ -168,7 +169,7 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
 
   echo "### prepare device specific code..."
   source build/envsetup.sh
-  lunch lineage_kminilte-user
+  lunch lineage_kminilte-userdebug
 
   echo "### running croot..."
   croot
@@ -178,6 +179,7 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
 else
   cd "$WORK_DIRECTORY"/kernel/samsung/kminilte || exit
   patch -p 1 < "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"/0002-lineage-16.0-kminilte-fix-kernel-only-p-custom-build.patch
+  patch -p 1 < "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"/0003-lineage-16.0-kminilte-replace-gcc-compiler-mtune-with-mcpu.patch
 fi
 
 cd "$WORK_DIRECTORY" || exit
@@ -225,9 +227,9 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 rm zImage
                 mv kernel.zip "$WORK_DIRECTORY"/out/arch/arm/boot/
                 cd "$WORK_DIRECTORY"/out/arch/arm/boot/ || exit
-                mv kernel.zip "$LOS_REVISION"-"$DEVICE_NAME"-kernel.P_custom."$NOW".zip
+                mv kernel.zip "$LOS_REVISION"-"$DEVICE_NAME"-kernel-"$LINARO_VERSION".P_custom."$NOW".zip
                 echo "### flashable zip created at: $WORK_DIRECTORY/out/arch/arm/boot/"
-                echo "### flashable zip named: $LOS_REVISION-$DEVICE_NAME-kernel.P_custom.$NOW.zip";;
+                echo "### flashable zip named: $LOS_REVISION-$DEVICE_NAME-kernel-"$LINARO_VERSION".P_custom.$NOW.zip";;
    esac
 else
    unsupported_response "$PROMPT"
