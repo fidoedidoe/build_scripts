@@ -25,7 +25,7 @@ I have only tested these scripts on my own environment: Gnome Ubuntu 19.04; 16GB
 ### How to execute the build script
 
 ###### Assumptions
-- This readme assumes you have a working build environment, the setup is beyond the scope of this guide - you will find plenty well constructed guides out there, one being: [How to Setup Ubuntu 16.04 LTS Xenial Xerus for Compiling Android ROMs](https://forum.xda-developers.com/chef-central/android/guide-how-to-setup-ubuntu-16-04-lts-t3363669).
+- This readme assumes you have a working build environment, the setup is beyond the scope of this guide - you will find plenty well constructed guides out there, one being: [How to Setup Ubuntu 18.04 LTS Bionic Beaver to Compile Android ROMs](https://nathanpfry.com/how-to-setup-ubuntu-18-04-lts-bionic-beaver-to-compile-android-roms/).
 - you have a folder structure `~/android/build_scripts`
 
 
