@@ -269,7 +269,7 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 rm zImage
                 mv kernel.zip "$WORK_DIRECTORY"/out/arch/arm/boot/
                 cd "$WORK_DIRECTORY"/out/arch/arm/boot/ || exit
-                mv kernel.zip GT-"$DEVICE_NAME"-kernel-los"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip
+                mv kernel.zip "$DEVICE_NAME"-kernel-los-"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip
                 echo "### flashable zip created at: $WORK_DIRECTORY/out/arch/arm/boot/"
                 echo "### flashable zip named: GT-"$DEVICE_NAME"-kernel-los"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip";;
    esac
