@@ -271,7 +271,7 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 cd "$WORK_DIRECTORY"/out/arch/arm/boot/ || exit
                 mv kernel.zip "$DEVICE_NAME"-kernel-los-"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip
                 echo "### flashable zip created at: $WORK_DIRECTORY/out/arch/arm/boot/"
-                echo "### flashable zip named: GT-"$DEVICE_NAME"-kernel-los"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip";;
+                echo "### flashable zip named: "$DEVICE_NAME"-kernel-los"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip";;
    esac
 else
    unsupported_response "$PROMPT"
