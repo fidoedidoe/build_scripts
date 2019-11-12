@@ -13,7 +13,7 @@
 
 DEVICE_NAME="kminilte"
 VANITY_DEVICE_TAG="S5 Mini ($DEVICE_NAME)"
-LINARO_VERSION="los-7.4.1-cortex-a7-neon-vfpv4"
+LINARO_VERSION="linaro-7.4.1-cortex-a7-neon-vfpv4"
 WORK_DIRECTORY="$HOME/android/kminilte-los-16.0"
 REPO_DIRECTORY='.repo'
 LOCAL_MANIFESTS_FILE='$DEVICE_NAME.xml'
