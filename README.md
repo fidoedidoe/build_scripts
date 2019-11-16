@@ -90,5 +90,5 @@ LOS_REVISION="cm-14.1"
 Change the the script directory and execute the script:  
 ```
 cd ~/android/build_scripts
-./build_slimrom7_kminilte.sh.sh
+./build_slimrom7_kminilte.sh
 ```
