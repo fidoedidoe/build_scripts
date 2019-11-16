@@ -184,6 +184,8 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 export CROSS_COMPILE="$KERNEL_CROSS_COMPILE"
                 export ARCH=arm
                 export SUBARCH=arm
+                export KBUILD_BUILD_USER="fidoedidoe"
+                export KBUILD_BUILD_HOST="on-an-underpowered-laptop"
                 cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/ || exit
                 mkdir -p "$WORK_DIRECTORY"/out
                 #if building between lineage and kernel only, sometimes residue files are left. 
