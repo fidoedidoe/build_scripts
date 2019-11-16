@@ -16,7 +16,8 @@
 
 LOS_PREFIX="cm"
 LOS_VERSION="14.1"
-LINARO_VERSION="linaro-7.4.1-cortex-a9-neon"
+LINARO_VERSION_SHORT="linaro-7.4.1"
+LINARO_VERSION="$LINARO_VERSION_SHORT-cortex-a9-neon"
 WORK_DIRECTORY="$HOME/android/gt-n51x0-los-$LOS_VERSION"
 REPO_DIRECTORY='.repo'
 LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
@@ -254,6 +255,9 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 export CROSS_COMPILE="$KERNEL_CROSS_COMPILE"
 		export ARCH=arm
 		export SUBARCH=arm
+                export LOCALVERSION="-$DEVICE_NAME-$LINARO_VERSION_SHORT"
+                export KBUILD_BUILD_USER="fidoedidoe"
+                export KBUILD_BUILD_HOST="on-an-underpowered-laptop"
                 cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/ || exit
                 mkdir -p "$WORK_DIRECTORY"/out
                 echo "CROSS_COMPILE: $CROSS_COMPILE"
