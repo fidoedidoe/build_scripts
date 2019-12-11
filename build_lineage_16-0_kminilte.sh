@@ -180,6 +180,8 @@ else
   cd "$WORK_DIRECTORY"/kernel/samsung/kminilte || exit
   patch -p 1 < "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"/0002-lineage-16.0-kminilte-fix-kernel-only-p-custom-build.patch
   patch -p 1 < "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"/0003-lineage-16.0-kminilte-replace-gcc-compiler-mtune-with-mcpu.patch
+  #patch -p 1 < "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"/0004-lineage-16.0-kminilte-gcc-9x-log2-spam.patch
+  #patch -p 1 < "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"/0005-lineage-16.0-kminilte-gcc-9x-uaccess-compile-assembler-error.patch
 fi
 
 cd "$WORK_DIRECTORY" || exit
