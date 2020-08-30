@@ -253,7 +253,7 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
     "recovery") echo "### Starting $BUILD_TYPE build, running 'mka recoveryimage'..."
                 export WITH_TWRP="true"
                 mka recoveryimage
-                cd "$WORK_DIRECTORY"/out/target/product/n5110/ || exit 
+                cd "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/ || exit 
                 mv recovery.img twrp-"$DEVICE_NAME"-"$NOW".img
                 echo "### TWRP flashable image name: twrp-$DEVICE_NAME-$NOW.img";;
 
