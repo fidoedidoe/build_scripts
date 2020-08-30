@@ -156,7 +156,7 @@ fi
 #The following is unecessary for kernel build
 if [[ ! $BUILD_TYPE = "kernel" ]]; then
 
-   #In order to build a full rom with the kernwl cm-14.1-custom branch
+   #In order to build a full rom with the kernel cm-14.1-custom branch
    #the toolchain specific optimisations need to be revoked (from Makefile). Easiest 
    #method to do this was to revert to an earlier version of the impacted file(s)
    #from commit "O3 plus lots of optimization flags"    
@@ -176,7 +176,13 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
 
    echo "### preparing device specific code..."
    source build/envsetup.sh
-   breakfast lineage_$DEVICE_NAME-user
+
+   #During recovery build (TWRP) i started hitting SEPolicy issues
+   #relating to permissive kernel & building with user, switching to userdebug mitigated this.  
+   case "$BUILD_TYPE" in
+      "recovery") breakfast lineage_$DEVICE_NAME-userdebug;;
+      *) breakfast lineage_$DEVICE_NAME-user;;
+   esac
 
    echo "### running croot..."
    croot
