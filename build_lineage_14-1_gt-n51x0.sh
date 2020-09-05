@@ -77,7 +77,7 @@ echo "### (1/6) Which build type (ROM, Recovery, Kernel? "
 echo "###       #1. Full LineageOS $LOS_VERSION Build"
 echo "###       #2. TWRP Recovery Only"
 echo "###       #3. LineageOS Kernel Only"
-read -r -p "### Enter build choice <1/2/3>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i 1 PROMPT
+read -r -p "### Enter build choice <1/2/3>? (automatically continues unprompted after 15 seconds): " -t 15 -e -i 1 PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="1"
@@ -119,12 +119,12 @@ if [ ! -d "$WORK_DIRECTORY/$REPO_DIRECTORY" ]; then
 else
   echo "### LOS repo/manifests exists..."
   echo "### Reverting all local LOS modifications..."
-  repo forall -vc "git reset --hard ; git clean -fdx" --quiet
+  time repo forall -vc "git reset --hard ; git clean -fdx" --quiet
   echo "### Revert complete"
 fi
 
 PROMPT=""
-read -r -p "### (3/6) Initialise local_manifest and perform repo sync (initial repo sync sync will take an age) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (3/6) Initialise local_manifest and perform repo sync (initial repo sync sync will take an age) <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -142,11 +142,11 @@ else
 fi
 
 echo "### sync repo with $REPO_SYNC_THREADS threads..."
-repo sync --jobs=$REPO_SYNC_THREADS $REPO_SYNC_FLAGS
+time repo sync --jobs=$REPO_SYNC_THREADS $REPO_SYNC_FLAGS
 
 
 PROMPT=""
-read -r -p "### (4/6) Prepare device specific code for: $VANITY_DEVICE_TAG <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (4/6) Prepare device specific code for: $VANITY_DEVICE_TAG <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -198,7 +198,7 @@ fi
 cd "$WORK_DIRECTORY" || exit
 
 PROMPT=""
-read -r -p "### (5/6) Apply patche(s) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (5/6) Apply patche(s) <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -241,7 +241,7 @@ cd "$WORK_DIRECTORY" || exit
 
 
 PROMPT=""
-read -r -p "### (6/6) Start $VANITY_DEVICE_TAG build process (this step can take some time depending on CC_CACHE) <Y/n>? (automatically continues unprompted after 10 seconds): " -t 10 -e -i Y PROMPT
+read -r -p "### (6/6) Start $VANITY_DEVICE_TAG build process (this step can take some time depending on CC_CACHE) <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -250,11 +250,11 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
    PROMPT=""
    case "$BUILD_TYPE" in
     "full")     echo "### Starting $BUILD_TYPE build, running 'brunch $DEVICE_NAME'..."
-                brunch lineage_$DEVICE_NAME-user;;
+                time brunch lineage_$DEVICE_NAME-user;;
 
     "recovery") echo "### Starting $BUILD_TYPE build, running 'mka recoveryimage'..."
                 export WITH_TWRP="true"
-                mka recoveryimage
+                time mka recoveryimage
                 cd "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/ || exit 
                 mv recovery.img twrp-"$DEVICE_NAME"-"$NOW".img
                 echo "### TWRP flashable image name: twrp-$DEVICE_NAME-$NOW.img";;
