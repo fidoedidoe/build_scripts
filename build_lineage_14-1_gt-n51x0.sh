@@ -270,10 +270,10 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 mkdir -p "$WORK_DIRECTORY"/out
                 echo "CROSS_COMPILE: $CROSS_COMPILE"
                 echo "defconfig: lineageos_"$DEVICE_NAME"_defconfig"
-	        make O="$WORK_DIRECTORY"/out clean
-                make O="$WORK_DIRECTORY"/out mrproper
-                make O="$WORK_DIRECTORY"/out lineageos_"$DEVICE_NAME"_defconfig
-                make O="$WORK_DIRECTORY"/out -j"$REPO_SYNC_THREADS"
+	        time make O="$WORK_DIRECTORY"/out clean
+                time make O="$WORK_DIRECTORY"/out mrproper
+                time make O="$WORK_DIRECTORY"/out lineageos_"$DEVICE_NAME"_defconfig
+                time make O="$WORK_DIRECTORY"/out -j"$REPO_SYNC_THREADS"
                 cp "$WORK_DIRECTORY"/out/arch/arm/boot/zImage "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3
                 echo "### building flashable anykernel3 zip file...."
                 cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3 || exit
