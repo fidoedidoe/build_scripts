@@ -29,6 +29,8 @@ REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle --no-repo-verify"
 CLONE_FLAGS="--depth 1"
 SLEEP_DURATION="1"
+#CCACHE="/usr/local/bin/ccache"
+CCACHE="/usr/bin/ccache"
 KERNEL_CROSS_COMPILE=""$WORK_DIRECTORY"/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-linux-androideabi-"
 NOW=$(date +"%Y%m%d")
 
@@ -258,7 +260,7 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 echo "### TWRP flashable image name: twrp-$DEVICE_NAME-$NOW.img";;
 
     "kernel")   echo "### Starting $BUILD_TYPE build..."
-                export CROSS_COMPILE="$KERNEL_CROSS_COMPILE"
+                export CROSS_COMPILE="$CCACHE $KERNEL_CROSS_COMPILE"
 		export ARCH=arm
 		export SUBARCH=arm
                 export LOCALVERSION="-$DEVICE_NAME-$LINARO_VERSION_SHORT"
