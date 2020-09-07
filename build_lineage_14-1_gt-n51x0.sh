@@ -29,55 +29,62 @@ REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle --no-repo-verify"
 CLONE_FLAGS="--depth 1"
 SLEEP_DURATION="1"
-#CCACHE="/usr/local/bin/ccache"
 CCACHE="/usr/bin/ccache"
 KERNEL_CROSS_COMPILE=""$WORK_DIRECTORY"/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-linux-androideabi-"
 NOW=$(date +"%Y%m%d")
+TIME="/usr/bin/time -f"
+TIME_FORMAT="------------\n The command '%C'\n Completed in [hours:]minutes:seconds \n %E \n------------"
+TWRP_VERSION="3.4.0"
+COLOUR_RED="\033[0;31m"
+COLOUR_GREEN="\033[1;32m"
+COLOUR_YELLOW='\033[1;33m'
+COLOUR_NEUTRAL="\033[0m"
+
 
 #############
 # Function(s)
 #############
 
 unsupported_response () {
-  echo "### Response: '$1' entered, only (Y/y) proceeds....exiting script!"
+  echo -e "${COLOUR_RED}### Response: '$1' entered, only (Y/y) proceeds....exiting script!${COLOUR_NEUTRAL}"
   exit 1
 }
 
 #####################
 # Main body of script
 #####################
-echo "###"
-echo "### Start of build script" 
+echo -e "${COLOUR_YELLOW}###"
+echo -e "### Start of build script${COLOUR_NEUTRAL}" 
 
 if [[ -n "$1" ]]; then
   DEVICE_NAME="${1^^}"
   if [[ "$DEVICE_NAME" =~ ^(N5100|N5110|N5120)$ ]]; then
-     echo "###"
+     echo -e "${COLOUR_YELLOW}###${COLOUR_NEUTRAL}"
   else
-     echo "###"
+     echo -e "${COLOUR_RED}###"
      echo "### The passed parameter $DEVICE_NAME is not supported"
-     echo "###"
+     echo -e "###${COLOUR_NEUTRAL}"
      exit
   fi
 else
   DEVICE_NAME="N5110"
-  echo "###"
+  echo -e "${COLOUR_YELLOW}###"
   echo "### No passed parameter $DEVICE_NAME assummed"
-  echo "###"
+  echo -e "###${COLOUR_NEUTRAL}"
 fi
 
 VANITY_DEVICE_TAG="Samsung Galaxy Note 8.0 (GT-$DEVICE_NAME)"
 DEVICE_NAME="${DEVICE_NAME,,}"
 
-echo "### Building for: $VANITY_DEVICE_TAG" 
-echo "###"
+echo -e "${COLOUR_YELLOW}### Building for: $VANITY_DEVICE_TAG" 
+echo -e "###${COLOUR_NEUTRAL}"
 
 PROMPT=""
-echo "### (1/6) Which build type (ROM, Recovery, Kernel? "
+echo -e "${COLOUR_YELLOW}### (1/6) Which build type (ROM, Recovery, Kernel? "
 echo "###       #1. Full LineageOS $LOS_VERSION Build"
 echo "###       #2. TWRP Recovery Only"
-echo "###       #3. LineageOS Kernel Only"
-read -r -p "### Enter build choice <1/2/3>? (automatically continues unprompted after 15 seconds): " -t 15 -e -i 1 PROMPT
+echo -e "###       #3. LineageOS Kernel Only${COLOUR_NEUTRAL}"
+read -r -p $"### Enter build choice <1/2/3>? `echo $'\n> '`(automatically continues unprompted after 15 seconds):" -t 15 -e -i 1 PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="1"
@@ -85,11 +92,11 @@ fi
 
 if [[ "$PROMPT" =~ ^(1|2|3)$ ]]; then
   case "$PROMPT" in
-   "1") echo "### Selected: Full LineageOS ROM build..."
+   "1") echo -e "${COLOUR_YELLOW}### Selected: Full LineageOS ROM build... ${COLOUR_NEUTRAL}"
         BUILD_TYPE="full";;
-   "2") echo "### Selected: TWRP Recovery Build..."
+   "2") echo -e "${COLOUR_YELLOW}### Selected: TWRP Recovery Build... ${COLOUR_NEUTRAL}"
         BUILD_TYPE="recovery";;
-   "3") echo "### Selected LineageOS Kernel Build..."
+   "3") echo -e "${COLOUR_YELLOW}### Selected LineageOS Kernel Build... ${COLOUR_NEUTRAL}"
         BUILD_TYPE="kernel";;    
   esac	  
 else
@@ -97,7 +104,7 @@ else
 fi
 
 PROMPT=""
-read -r -p "### (2/6) Initialise/Re-base LOS Repo's <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
+read -r -p "### (2/6) Initialise/Re-base LOS Repo's <Y/n>? `echo $'\n> '`(automatically continues unprompted after 1 seconds): " -t 1 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -114,17 +121,17 @@ cd "$WORK_DIRECTORY" || exit
 	
 
 if [ ! -d "$WORK_DIRECTORY/$REPO_DIRECTORY" ]; then
-  echo "### initialising LOS repo/manifests for first time..."
-  repo init -u https://github.com/LineageOS/android.git -b $LOS_REVISION $REPO_INIT_FLAGS
+  echo -e "${COLOUR_YELLOW}### initialising LOS repo/manifests for first time... ${COLOUR_NEUTRAL}"
+  $TIME "$TIME_FORMAT" repo init -u https://github.com/LineageOS/android.git -b $LOS_REVISION $REPO_INIT_FLAGS
 else
-  echo "### LOS repo/manifests exists..."
-  echo "### Reverting all local LOS modifications..."
-  time repo forall -vc "git reset --hard ; git clean -fdx" --quiet
-  echo "### Revert complete"
+  echo -e "${COLOUR_YELLOW}### LOS repo/manifests exists..."
+  echo -e "### Reverting all local LOS modifications... ${COLOUR_NEUTRAL}"
+  $TIME "$TIME_FORMAT" repo forall -vc "git reset --hard ; git clean -fdx" --quiet
+  echo -e "${COLOUR_YELLOW}### Revert complete${COLOUR_NEUTRAL}"
 fi
 
 PROMPT=""
-read -r -p "### (3/6) Initialise local_manifest and perform repo sync (initial repo sync sync will take an age) <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
+read -r -p "### (3/6) Initialise local_manifest and perform repo sync (initial repo sync sync will take an age) <Y/n>? `echo $'\n> '`(automatically continues unprompted after 2 seconds): " -t 2 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -134,19 +141,20 @@ if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
 fi
 
 if [ ! -d "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY" ]; then
-  echo "### create 'local_manifest' and re-run repo sync..."           
+  echo -e "${COLOUR_YELLOW}### create 'local_manifest' and re-run repo sync... ${COLOUR_NEUTRAL}"
   mkdir -p "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"
-  git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/android_.repo_local_manifests_gt-n51x0 -b "$MANIFEST_BRANCH" .repo/local_manifests
+  $TIME "$TIME_FORMAT" git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/android_.repo_local_manifests_gt-n51x0 -b "$MANIFEST_BRANCH" .repo/local_manifests
 else
-  echo "### $LOCAL_MANIFESTS_DIRECTORY already exists, skipping git clone"
+  echo -e "${COLOUR_YELLOW}### $LOCAL_MANIFESTS_DIRECTORY already exists, skipping git clone${COLOUR_NEUTRAL}"
 fi
 
-echo "### sync repo with $REPO_SYNC_THREADS threads..."
-time repo sync --jobs=$REPO_SYNC_THREADS $REPO_SYNC_FLAGS
+echo -e "${COLOUR_YELLOW}### sync repo with $REPO_SYNC_THREADS threads... ${COLOUR_NEUTRAL}"
+$TIME "$TIME_FORMAT" repo sync --jobs=$REPO_SYNC_THREADS $REPO_SYNC_FLAGS
+echo -e "${COLOUR_YELLOW}### sync complete!${COLOUR_NEUTRAL}"
 
 
 PROMPT=""
-read -r -p "### (4/6) Prepare device specific code for: $VANITY_DEVICE_TAG <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
+read -r -p "### (4/6) Prepare device specific code for: $VANITY_DEVICE_TAG <Y/n>? `echo $'\n> '`(automatically continues unprompted after 2 seconds): " -t 2 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -173,10 +181,10 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
 
    cd "$WORK_DIRECTORY" || exit
 
-   echo "### set environment var to stop issues with prebuilts/misc/.../flex"
+   echo -e "${COLOUR_YELLOW}### set environment var to stop issues with prebuilts/misc/.../flex${COLOUR_NEUTRAL}"
    export LC_ALL=C
 
-   echo "### preparing device specific code..."
+   echo -e "${COLOUR_YELLOW}### preparing device specific code... ${COLOUR_NEUTRAL}"
    source build/envsetup.sh
 
    #During recovery build (TWRP) i started hitting SEPolicy issues
@@ -186,19 +194,20 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
       *) breakfast lineage_$DEVICE_NAME-user;;
    esac
 
-   echo "### running croot..."
+   echo -e "${COLOUR_YELLOW}### running croot... ${COLOUR_NEUTRAL}"
    croot
 
-   echo "### clearing old build output (if any exists)"           
+   echo -e "${COLOUR_YELLOW}### clearing old build output (if any exists)${COLOUR_NEUTRAL}"           
    mka clobber
+   echo -e "${COLOUR_YELLOW}### Device specific code prepared!${COLOUR_NEUTRAL}"
 else
-   echo "### Building kernel, nothing to do here!"           
+   echo -e "${COLOUR_YELLOW}### Building kernel, nothing to do here!${COLOUR_NEUTRAL}"           
 fi
 
 cd "$WORK_DIRECTORY" || exit
 
 PROMPT=""
-read -r -p "### (5/6) Apply patche(s) <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
+read -r -p "### (5/6) Apply patche(s) <Y/n>? `echo $'\n> '`(automatically continues unprompted after 2 seconds): " -t 2 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -208,40 +217,41 @@ if [[ ! $PROMPT =~ ^[Yy]$ ]]; then
 fi
 
 cd "$WORK_DIRECTORY"/frameworks/base || exit
-echo "### applying patch device/samsung/n5100/patch/note-8-nougat-mtp-crash.patch"
+echo -e "${COLOUR_YELLOW}### applying patch device/samsung/n5100/patch/note-8-nougat-mtp-crash.patch${COLOUR_NEUTRAL}"
 patch -p 1 < ../../device/samsung/n5100/patch/note-8-nougat-mtp-crash.patch
 sleep $SLEEP_DURATION
 
 cd "$WORK_DIRECTORY"/external/wpa_supplicant_8/wpa_supplicant || exit
-echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0001_external_wpa-supplicant-8_wpa-supplicant_wpa-supplicant-template.patch"
+echo -e "${COLOUR_YELLOW}### applying $LOCAL_MANIFESTS_DIRECTORY/0001_external_wpa-supplicant-8_wpa-supplicant_wpa-supplicant-template.patch${COLOUR_NEUTRAL}"
 patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0001_external_wpa-supplicant-8_wpa-supplicant_wpa-supplicant-template.patch
 sleep $SLEEP_DURATION
 
 case "$BUILD_TYPE" in
   "full") cd "$WORK_DIRECTORY" || exit
-          echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0002-custom-toolchain-optimisation.patch"
+          echo -e "${COLOUR_YELLOW}### applying $LOCAL_MANIFESTS_DIRECTORY/0002-custom-toolchain-optimisation.patch${COLOUR_NEUTRAL}"
           patch -p 1 < $LOCAL_MANIFESTS_DIRECTORY/0002-custom-toolchain-optimisation.patch;;
   "kernel") 
           if [[ $DEVICE_NAME = "n5100" ]]; then
              cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3 || exit
-             echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0003-AnyKernel3-N5100-Device-Names.patch"
+             echo -e "${COLOUR_YELLOW}### applying $LOCAL_MANIFESTS_DIRECTORY/0003-AnyKernel3-N5100-Device-Names.patch${COLOUR_NEUTRAL}"
              patch -p 1 < ../../../../$LOCAL_MANIFESTS_DIRECTORY/0003-AnyKernel3-N5100-Device-Names.patch
              sleep $SLEEP_DURATION
           fi
           if [[ $DEVICE_NAME = "n5120" ]]; then
              cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3 || exit
              sleep $SLEEP_DURATION
-             echo "### applying $LOCAL_MANIFESTS_DIRECTORY/0004-AnyKernel3-N5120-Device-Names.patch"
+             echo -e "${COLOUR_YELLOW}### applying $LOCAL_MANIFESTS_DIRECTORY/0004-AnyKernel3-N5120-Device-Names.patch${COLOUR_NEUTRAL}"
              patch -p 1 < ../../../../$LOCAL_MANIFESTS_DIRECTORY/0004-AnyKernel3-N5120-Device-Names.patch
              sleep $SLEEP_DURATION
           fi;;
 esac
 
 cd "$WORK_DIRECTORY" || exit
+echo -e "${COLOUR_YELLOW}### Patches applied!${COLOUR_NEUTRAL}"
 
 
 PROMPT=""
-read -r -p "### (6/6) Start $VANITY_DEVICE_TAG build process (this step can take some time depending on CC_CACHE) <Y/n>? (automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
+read -r -p "### (6/6) Start $VANITY_DEVICE_TAG build process (this step can take some time depending on CC_CACHE) <Y/n>? `echo $'\n> '`(automatically continues unprompted after 2 seconds): " -t 2 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
   PROMPT="Y"
@@ -249,17 +259,18 @@ fi
 if [[ $PROMPT =~ ^[Yy]$ ]]; then
    PROMPT=""
    case "$BUILD_TYPE" in
-    "full")     echo "### Starting $BUILD_TYPE build, running 'brunch $DEVICE_NAME'..."
-                time brunch lineage_$DEVICE_NAME-user;;
+    "full")     echo -e "${COLOUR_YELLOW}### Starting $BUILD_TYPE build, running 'brunch $DEVICE_NAME'... ${COLOUR_NEUTRAL}"
+                brunch lineage_$DEVICE_NAME-user;;
 
-    "recovery") echo "### Starting $BUILD_TYPE build, running 'mka recoveryimage'..."
+    "recovery") echo -e "${COLOUR_YELLOW}### Starting $BUILD_TYPE build, running 'mka recoveryimage'... ${COLOUR_NEUTRAL}"
                 export WITH_TWRP="true"
-                time mka recoveryimage
+                mka recoveryimage
                 cd "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/ || exit 
-                mv recovery.img twrp-"$DEVICE_NAME"-"$NOW".img
-                echo "### TWRP flashable image name: twrp-$DEVICE_NAME-$NOW.img";;
+                mv recovery.img twrp-"$TWRP_VERSION"-"$DEVICE_NAME"-"$NOW".img
+                echo -e "${COLOUR_YELLOW}### TWRP flashable image created at: ${COLOUR_GREEN}$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME/"
+                echo -e "${COLOUR_YELLOW}### TWRP flashable image name: ${COLOUR_GREEN}twrp-$TWRP_VERSION-$DEVICE_NAME-$NOW.img${COLOUR_NEUTRAL}";;
 
-    "kernel")   echo "### Starting $BUILD_TYPE build..."
+    "kernel")   echo -e "${COLOUR_YELLOW}### Starting $BUILD_TYPE build... ${COLOUR_NEUTRAL}"
                 export CROSS_COMPILE="$CCACHE $KERNEL_CROSS_COMPILE"
 		export ARCH=arm
 		export SUBARCH=arm
@@ -268,25 +279,32 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 export KBUILD_BUILD_HOST="on-an-underpowered-laptop"
                 cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/ || exit
                 mkdir -p "$WORK_DIRECTORY"/out
-                echo "CROSS_COMPILE: $CROSS_COMPILE"
-                echo "defconfig: lineageos_"$DEVICE_NAME"_defconfig"
-	        time make O="$WORK_DIRECTORY"/out clean
-                time make O="$WORK_DIRECTORY"/out mrproper
-                time make O="$WORK_DIRECTORY"/out lineageos_"$DEVICE_NAME"_defconfig
-                time make O="$WORK_DIRECTORY"/out -j"$REPO_SYNC_THREADS"
-                cp "$WORK_DIRECTORY"/out/arch/arm/boot/zImage "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3
-                echo "### building flashable anykernel3 zip file...."
-                cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3 || exit
-                zip -r9 kernel.zip * -x .git README.md *placeholder kernel.zip
-                rm zImage
-                mv kernel.zip "$WORK_DIRECTORY"/out/arch/arm/boot/
-                cd "$WORK_DIRECTORY"/out/arch/arm/boot/ || exit
-                mv kernel.zip "$DEVICE_NAME"-kernel-los-"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip
-                echo "### flashable zip created at: $WORK_DIRECTORY/out/arch/arm/boot/"
-                echo "### flashable zip named: "$DEVICE_NAME"-kernel-los"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip";;
+                echo -e "${COLOUR_YELLOW}CROSS_COMPILE: $CROSS_COMPILE"
+                echo -e "defconfig: lineageos_"$DEVICE_NAME"_defconfig${COLOUR_NEUTRAL}"
+	        make O="$WORK_DIRECTORY"/out clean
+                make O="$WORK_DIRECTORY"/out mrproper
+                make O="$WORK_DIRECTORY"/out lineageos_"$DEVICE_NAME"_defconfig
+                $TIME "$TIME_FORMAT" make O="$WORK_DIRECTORY"/out -j"$REPO_SYNC_THREADS"
+                if [ -f "$WORK_DIRECTORY"/out/arch/arm/boot/zImage ]; then
+                   cp "$WORK_DIRECTORY"/out/arch/arm/boot/zImage "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3
+                   echo -e "${COLOUR_YELLOW}### building flashable anykernel3 zip file.... ${COLOUR_NEUTRAL}"
+                   cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412/anyKernel3 || exit
+                   zip -r9 kernel.zip * -x .git README.md *placeholder kernel.zip
+                   rm zImage
+                   mv kernel.zip "$WORK_DIRECTORY"/out/arch/arm/boot/
+                   cd "$WORK_DIRECTORY"/out/arch/arm/boot/ || exit
+                   mv kernel.zip "$DEVICE_NAME"-kernel-los-"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip
+                   echo -e "${COLOUR_YELLOW}### flashable kernel zip created at: ${COLOUR_GREEN}$WORK_DIRECTORY/out/arch/arm/boot/"
+                   echo -e "${COLOUR_YELLOW}### flashable kernel zip named: ${COLOUR_GREEN}"$DEVICE_NAME"-kernel-los"$LOS_VERSION"-"$LINARO_VERSION"."$NOW".zip${COLOUR_NEUTRAL}"
+               else
+		   echo -e "${COLOUR_RED}###"
+		   echo "### Kernel Compile failure (cannot find zImage)!! Script aborting."
+		   echo -e "###${COLOUR_NEUTRAL}"
+		   exit
+               fi;;
    esac
 else
    unsupported_response "$PROMPT"
 fi
 
-echo "### End of Build Script for $VANITY_DEVICE_TAG! ###"
+echo -e "${COLOUR_YELLOW}### End of Build Script for $VANITY_DEVICE_TAG! ###${COLOUR_NEUTRAL}"
