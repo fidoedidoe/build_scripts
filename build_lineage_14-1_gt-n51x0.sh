@@ -24,6 +24,7 @@ LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
 REPO_SYNC_THREADS=$(nproc --all)
 LOS_REVISION="$LOS_PREFIX-$LOS_VERSION"
 GITHUB_REPO="fidoedidoe"
+MANIFEST_REPO="android_.repo_local_manifests_gt-n51x0"
 MANIFEST_BRANCH="$LOS_PREFIX-$LOS_VERSION"
 REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle --no-repo-verify"
@@ -165,7 +166,7 @@ if [[ $SKIP_BUILD_STEPS = "N" ]]; then
   if [ ! -d "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY" ]; then
     echo -e "${COLOUR_YELLOW}### create 'local_manifest' and re-run repo sync... ${COLOUR_NEUTRAL}"
     mkdir -p "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"
-    $TIME "$TIME_FORMAT" git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/android_.repo_local_manifests_gt-n51x0 -b "$MANIFEST_BRANCH" .repo/local_manifests
+    $TIME "$TIME_FORMAT" git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/$MANIFEST_REPO -b "$MANIFEST_BRANCH" .repo/local_manifests
   else
     echo -e "${COLOUR_YELLOW}### $LOCAL_MANIFESTS_DIRECTORY already exists, skipping git clone${COLOUR_NEUTRAL}"
   fi
