@@ -46,6 +46,24 @@ SKIP_BUILD_STEPS="N"
 # Function(s)
 #############
 
+echoMsg() {
+
+ # shellcheck disable=SC2034
+ YELLOW='\033[1;33m'
+
+ # shellcheck disable=SC2034
+ NC='\033[0m' # No Color
+ 
+ # shellcheck disable=SC2034
+ MSG=${1:-}
+
+ # shellcheck disable=SC2034
+ ARG1=${2:-}
+ 
+ # shellcheck disable=SC2086
+ echo -e ${ARG1} "${YELLOW}${MSG}${NC}"
+}
+
 unsupported_response () {
   echo -e "${COLOUR_RED}### Response: '$1' was entered, aborting script execution!${COLOUR_NEUTRAL}"
   exit 1
@@ -243,8 +261,8 @@ if [[ $SKIP_BUILD_STEPS = "N" ]]; then
   fi
 
   cd "$WORK_DIRECTORY"/frameworks/base || exit
-  echo -e "${COLOUR_YELLOW}### applying patch device/samsung/n5100/patch/note-8-nougat-mtp-crash.patch${COLOUR_NEUTRAL}"
-  patch -p 1 < ../../device/samsung/n5100/patch/note-8-nougat-mtp-crash.patch
+  echo -e "${COLOUR_YELLOW}### applying patch device/samsung/$DEVICE_NAME/patch/note-8-nougat-mtp-crash.patch${COLOUR_NEUTRAL}"
+  patch -p 1 < ../../device/samsung/$DEVICE_NAME/patch/note-8-nougat-mtp-crash.patch
   sleep $SLEEP_DURATION
 
   cd "$WORK_DIRECTORY"/external/wpa_supplicant_8/wpa_supplicant || exit
