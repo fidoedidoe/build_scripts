@@ -115,7 +115,7 @@ fi
 if [ ! -d "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY" ]; then
   echo "### create 'local_manifest' and re-run repo sync..."           
   mkdir -p "$WORK_DIRECTORY/$LOCAL_MANIFESTS_DIRECTORY"
-  git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/android_.repo_local_manifests -b $MANIFEST_BRANCH .repo/local_manifests
+  git clone $CLONE_FLAGS https://github.com/$GITHUB_REPO/android_local_manifests_kminilte -b $MANIFEST_BRANCH .repo/local_manifests
 else
   echo "### local_manifest exists...skipping."           
 fi

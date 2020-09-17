@@ -24,7 +24,7 @@ LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
 REPO_SYNC_THREADS=$(nproc --all)
 LOS_REVISION="$LOS_PREFIX-$LOS_VERSION"
 GITHUB_REPO="fidoedidoe"
-MANIFEST_REPO="android_.repo_local_manifests_gt-n51x0"
+MANIFEST_REPO="android_local_manifests_gt-n51x0"
 MANIFEST_BRANCH="$LOS_PREFIX-$LOS_VERSION"
 REPO_INIT_FLAGS="--depth=1 --no-clone-bundle"
 REPO_SYNC_FLAGS="--quiet --force-sync --no-tags --no-clone-bundle --no-repo-verify"
