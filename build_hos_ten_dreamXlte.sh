@@ -15,18 +15,12 @@ LINARO_VERSION_SHORT="gcc-10.2.0"
 LINARO_VERSION="$LINARO_VERSION_SHORT-experimental"
 WORK_DIRECTORY="$HOME/android/dreamXlte-hos-$HOS_VERSION"
 REPO_DIRECTORY='.repo'
-LOCAL_MANIFESTS_FILE='local_manifest.xml'
 LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
 LOCAL_MANIFEST_REPO="fidoedidoe"
 LOCAL_MANIFEST_BRANCH="havoc-os-$HOS_VERSION"
 CPU_THREADS=$(nproc --all)
-GITHUB_REPO="Havoc-OS"
-ANDROID_MANIFEST_REPO="android_manifest"
-ANDROID_MANIFEST_BRANCH="$HOS_VERSION"
-ANDROID_MANIFEST_DIRECTORY=""
 REPO_INIT_FLAG_1="--depth=1"
 REPO_INIT_FLAG_2="--no-clone-bundle"
-SLEEP_DURATION="1"
 CCACHE="/usr/bin/ccache"
 KERNEL_CROSS_COMPILE="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
 NOW=$(date +"%Y%m%d")
@@ -215,20 +209,7 @@ fi
 #The following is unecessary for kernel build
 if [[ ! $BUILD_TYPE = "kernel" ]]; then
 
-   #In order to build a full rom with the kernel cm-14.1-custom branch
-   #the toolchain specific optimisations need to be revoked (from Makefile). Easiest 
-   #method to do this was to revert to an earlier version of the impacted file(s)
-   #from commit "O3 plus lots of optimization flags"    
-
-   #echo "### we're building "$BUILD_TYPE", revert build flag optimisations in Makefile"
-   #cd "$WORK_DIRECTORY"/kernel/samsung/smdk4412 || exit
-
-   #we only got cm-14.1-custom earlier. now get standard cm-14.1 branch 
-   #git fetch github cm-14.1
-
-   #git checkout github/cm-14.1 -- Makefile
-
-   #cd "$WORK_DIRECTORY" || exit
+   cd "$WORK_DIRECTORY" || exit
 
    #echoMsg "### set environment var to stop issues with prebuilts/misc/.../flex"
    export LC_ALL=C
@@ -242,8 +223,15 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
    echoMsg "### running croot..."
    croot
 
-   echoMsg "### clearing old build output (if any exists)"
-   mka clobber
+   echoMsg "### Do you want to clear old build output (if any exists), select Y when new code added"
+   read -r -p "(automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
+   echo
+   if [ -z "$PROMPT" ]; then
+     PROMPT="Y"
+   fi
+   if [[ $PROMPT =~ ^[Yy]$ ]]; then
+      mka clobber
+   fi
    echoMsg "### Device specific code prepared!"
 else
    echoMsg "### Building kernel, nothing to do here!"
@@ -314,13 +302,13 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
    case "$BUILD_TYPE" in
     "full")     echoMsg "### Starting $BUILD_TYPE build, running 'brunch $DEVICE_NAME'..."
                 brunch havoc_$DEVICE_NAME-userdebug
-                if [ -f "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/hos-"$HOS_VERSION"-"$NOW"-UNOFFICIAL-"$DEVICE_NAME".zip ]; then
+                if [ -f "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/Havoc-OS-"$VANITY_HOS_VERSION"-"$NOW"-"$DEVICE_NAME"-Unofficial.zip ]; then
                    echoMsg "### Custom ROM flashable zip created at: $WORK_DIRECTORY/out/target/product/$DEVICE_NAME/" "GREEN"
-                   echoMsg "### Custom ROM flashable zip name: hos-$HOS_VERSION-$NOW-UNOFFICIAL-$DEVICE_NAME.zip" "GREEN"
+                   echoMsg "### Custom ROM flashable zip name: Havoc-OS-$VANITY_HOS_VERSION=-$NOW-$DEVICE_NAME-Unofficial.zip" "GREEN"
                 else
 		   echoMsg "###" "RED"
 		   echoMsg "### Custom ROM Compile failure" "RED"
-                   echoMsg "### (script cannot find the file 'hos-$HOS_VERSION-$NOW-UNOFFICIAL-$DEVICE_NAME.zip')!!""RED"
+                   echoMsg "### (script cannot find the file 'Havoc-OS-$VANITY_HOS_VERSION-$NOW-$DEVICE_NAME-Unofficial.zip')" "RED"
                    echoMsg "### Script aborting." "RED"
 		   echoMsg "###" "RED"
 		   exit
