@@ -302,13 +302,13 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
    case "$BUILD_TYPE" in
     "full")     echoMsg "### Starting $BUILD_TYPE build, running 'brunch $DEVICE_NAME'..."
                 brunch havoc_$DEVICE_NAME-userdebug
-                if [ -f "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/Havoc-OS-"$VANITY_HOS_VERSION"-"$NOW"-"$DEVICE_NAME"-Unofficial.zip ]; then
+                if [ -f "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/Havoc-OS-v"$VANITY_HOS_VERSION"-"$NOW"-"$DEVICE_NAME"-Unofficial.zip ]; then
                    echoMsg "### Custom ROM flashable zip created at: $WORK_DIRECTORY/out/target/product/$DEVICE_NAME/" "GREEN"
                    echoMsg "### Custom ROM flashable zip name: Havoc-OS-$VANITY_HOS_VERSION=-$NOW-$DEVICE_NAME-Unofficial.zip" "GREEN"
                 else
 		   echoMsg "###" "RED"
 		   echoMsg "### Custom ROM Compile failure" "RED"
-                   echoMsg "### (script cannot find the file 'Havoc-OS-$VANITY_HOS_VERSION-$NOW-$DEVICE_NAME-Unofficial.zip')" "RED"
+                   echoMsg "### (script cannot find the file 'Havoc-OS-v$VANITY_HOS_VERSION-$NOW-$DEVICE_NAME-Unofficial.zip')" "RED"
                    echoMsg "### Script aborting." "RED"
 		   echoMsg "###" "RED"
 		   exit
@@ -354,7 +354,7 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                    cd "$WORK_DIRECTORY"/out/arch/arm/boot/ || exit
                    mv kernel.zip "$DEVICE_NAME"-kernel-hos-"$VANITY_HOS_VERSION"-"$LINARO_VERSION"."$NOW".zip
                    echoMsg "### flashable kernel zip created at: $WORK_DIRECTORY/out/arch/arm/boot/" "GREEN"
-                   echoMsg "### flashable kernel zip named: $DEVICE_NAME-kernel-hos$VANITY_HOS_VERSION-$LINARO_VERSION.$NOW.zip" "GREEN"
+                   echoMsg "### flashable kernel zip named: $DEVICE_NAME-kernel-hos-$VANITY_HOS_VERSION-$LINARO_VERSION.$NOW.zip" "GREEN"
                else
 		   echoMsg "###" "RED"
 		   echoMsg "### Kernel Compile failure (script cannot find file 'zImage')!! Script aborting." "RED"
