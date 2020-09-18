@@ -22,7 +22,13 @@ CPU_THREADS=$(nproc --all)
 REPO_INIT_FLAG_1="--depth=1"
 REPO_INIT_FLAG_2="--no-clone-bundle"
 CCACHE="/usr/bin/ccache"
-KERNEL_CROSS_COMPILE="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
+#KERNEL_CROSS_COMPILE="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
+#KERNEL_CROSS_COMPILE_ARM32="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-"
+KERNEL_CROSS_COMPILE="/home/gavin/android/dev/toolchain/aarch64-linux-android-10.2/bin/aarch64-linux-android-"
+#KERNEL_CROSS_COMPILE_ARM32="/home/gavin/android/dev/toolchain/arm-linux-androideabi-10.2/bin/arm-linux-androideabi-"
+KERNEL_CROSS_COMPILE_ARM32="/home/gavin/android/dev/toolchain/arm-linux-androideabi-10.2_softfpu/bin/arm-linux-androideabi-"
+KERNEL_DIR="$WORK_DIRECTORY/kernel"
+KERNEL_OUT_DIR="$WORK_DIRECTORY/out"
 NOW=$(date +"%Y%m%d")
 TIME="/usr/bin/time"
 TIME_FORMAT="------------\n The command '%C'\n Completed in [hours:]minutes:seconds \n %E \n------------"
@@ -223,11 +229,11 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
    echoMsg "### running croot..."
    croot
 
-   echoMsg "### Do you want to clear old build output (if any exists), select Y when new code added"
-   read -r -p "(automatically continues unprompted after 5 seconds): " -t 5 -e -i Y PROMPT
+   echoMsg "### Do you want to clear old build output (if any exists), select Y when new code added <N/y>"
+   read -r -p "(automatically continues unprompted after 5 seconds): " -t 5 -e -i N PROMPT
    echo
    if [ -z "$PROMPT" ]; then
-     PROMPT="Y"
+     PROMPT="N"
    fi
    if [[ $PROMPT =~ ^[Yy]$ ]]; then
       mka clobber
@@ -251,13 +257,15 @@ if [[ $SKIP_BUILD_STEPS = "N" ]]; then
     unsupported_response "$PROMPT"
   fi
 
-  ##  - Temp  - fix patches below ##
-  ##cd "$WORK_DIRECTORY" || exit
-  ##if [ -f kernel/samsung/universal8895/arch/arm64/configs/exynos8895_dreamlte_dream2lte_defconfig ]; then
-  ##   if [ ! -f kernel/samsung/universal8895/arch/arm64/configs/exynos8895-dream2lte_defconfig ]; then
-  ##      cp kernel/samsung/universal8895/arch/arm64/configs/exynos8895_dreamlte_dream2lte_defconfig kernel/samsung/universal8895/arch/arm64/configs/exynos8895-dream2lte_defconfig
-  ##   fi
-  ##fi 
+  # wireguard download isn't working within build script: HACK - revist. 
+  if [ ! -d "$WORK_DIRECTORY"/kernel/samsung/universal8895/net/wireguard ]; then
+     echoMsg "wireguard: source repo exists, purging..."
+     rm -rf "$WORK_DIRECTORY"/kernel/samsung/universal8895/net/wireguard || exit
+  fi 
+  echoMsg "wireguard: Downloading latest source..."
+  cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit 
+  scripts/fetch-latest-wireguard.sh
+  echoMsg "wireguard: Downoad complete!"
 
   cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit
     for PATCH_FILE in ../../../patches/patches/kernel_samsung_universal8895/*.patch; do
@@ -265,7 +273,7 @@ if [[ $SKIP_BUILD_STEPS = "N" ]]; then
     patch -p 1 < "$PATCH_FILE" 
   done 
 
-  # not needed, HAVOC-OS repos have these patches applied already
+  # not needed, HAVOC-OS/device_samsung_universal8895-common repo has these patches applied already
   #cd "$WORK_DIRECTORY"/device/samsung/universal8895-common || exit
   #  for PATCH_FILE in ../../../patches/patches/device_samsung_universal8895-common/*.patch; do
   #  echoMsg "patching file: device/samsung/universal8895-common/$PATCH_FILE"
@@ -273,16 +281,6 @@ if [[ $SKIP_BUILD_STEPS = "N" ]]; then
   #  fi
   #done 
 
-  # wireguard download isn't working within build script: HACK - revist. 
-  if [ ! -f "$WORK_DIRECTORY"/kernel/samsung/universal8895/net ]; then
-     echoMsg "wireguard: source repo exists, purging..."
-     rm -rf "$WORK_DIRECTORY"/kernel/samsung/universal8895/net || exit
-  fi 
-  echoMsg "wireguard: Downloading latest source..."
-  cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit 
-  scripts/fetch-latest-wireguard.sh
-  echoMsg "wireguard: Downoad complete!"
-  
   cd "$WORK_DIRECTORY" || exit
   echoMsg "### Patches applied!"
 else
@@ -331,33 +329,38 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
 
     "kernel")   echoMsg "### Starting $BUILD_TYPE build..."
                 export CROSS_COMPILE="$CCACHE $KERNEL_CROSS_COMPILE"
-		export ARCH=arm
-		export SUBARCH=arm
+                export CROSS_COMPILE_ARM32="$CCACHE $KERNEL_CROSS_COMPILE_ARM32"
+                export ARCH=arm64
+		export SUBARCH=arm64
                 export LOCALVERSION="-$DEVICE_NAME-$LINARO_VERSION_SHORT"
                 export KBUILD_BUILD_USER="fidoedidoe"
                 export KBUILD_BUILD_HOST="on-an-underpowered-laptop"
                 cd "$WORK_DIRECTORY"/kernel/samsung/universal8895/ || exit
-                mkdir -p "$WORK_DIRECTORY"/out
+                mkdir -p "$KERNEL_OUT_DIR"
                 echoMsg "CROSS_COMPILE: $CROSS_COMPILE"
                 echoMsg "defconfig: exynos8895-${DEVICE_NAME}_defconfig"
-	        make O="$WORK_DIRECTORY"/out clean
-                make O="$WORK_DIRECTORY"/out mrproper
-                make O="$WORK_DIRECTORY"/out exynos8895-"$DEVICE_NAME"_defconfig
-                $TIME -f "$TIME_FORMAT" make O="$WORK_DIRECTORY"/out -j"$CPU_THREADS"
-                if [ -f "$WORK_DIRECTORY"/out/arch/arm/boot/zImage ]; then
-                   cp "$WORK_DIRECTORY"/out/arch/arm/boot/zImage "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
+                #cd "$KERNEL_DIR" || exit
+	        make O="$KERNEL_OUT_DIR" clean
+                make O="$KERNEL_OUT_DIR" mrproper
+                #make O="$KERNEL_OUT_DIR" exynos8895-"$DEVICE_NAME"_defconfig
+                make O="$KERNEL_OUT_DIR" ARCH=$ARCH exynos8895-"$DEVICE_NAME"_defconfig
+                $TIME -f "$TIME_FORMAT" make O="$KERNEL_OUT_DIR" ARCH="$ARCH" -j"$CPU_THREADS"
+                if [ -f "$KERNEL_OUT_DIR"/arch/arm64/boot/Image.gz ]; then
+                   cp "$KERNEL_OUT_DIR"/arch/arm64/boot/Image.gz "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
+                   cp "$KERNEL_OUT_DIR"/arch/arm64/boot/dtb.img "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
                    echoMsg "### building flashable anykernel3 zip file...."
                    cd "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3 || exit
                    zip -r9 kernel.zip ./* -x .git README.md ./*placeholder kernel.zip
-                   rm zImage
-                   mv kernel.zip "$WORK_DIRECTORY"/out/arch/arm/boot/
-                   cd "$WORK_DIRECTORY"/out/arch/arm/boot/ || exit
+                   rm Image.gz
+                   rm dtb.img
+                   mv kernel.zip "$KERNEL_OUT_DIR"/arch/arm64/boot/
+                   cd "$KERNEL_OUT_DIR"/arch/arm64/boot/ || exit
                    mv kernel.zip "$DEVICE_NAME"-kernel-hos-"$VANITY_HOS_VERSION"-"$LINARO_VERSION"."$NOW".zip
-                   echoMsg "### flashable kernel zip created at: $WORK_DIRECTORY/out/arch/arm/boot/" "GREEN"
+                   echoMsg "### flashable kernel zip created at: $WORK_DIRECTORY/out/arch/arm64/boot/" "GREEN"
                    echoMsg "### flashable kernel zip named: $DEVICE_NAME-kernel-hos-$VANITY_HOS_VERSION-$LINARO_VERSION.$NOW.zip" "GREEN"
                else
 		   echoMsg "###" "RED"
-		   echoMsg "### Kernel Compile failure (script cannot find file 'zImage')!! Script aborting." "RED"
+		   echoMsg "### Kernel Compile failure (script cannot find file 'Image.gz')!! Script aborting." "RED"
 		   echoMsg "###" "RED"
 		   exit
                fi;;
