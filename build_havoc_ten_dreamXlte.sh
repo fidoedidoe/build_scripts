@@ -10,7 +10,7 @@
 #############
 
 HOS_VERSION="ten"
-VANITY_HOS_VERSION="3.9"
+HOS_VERSION_VANITY="3.9"
 LINARO_VERSION_SHORT="gcc-10.2.0"
 LINARO_VERSION="$LINARO_VERSION_SHORT-experimental"
 WORK_DIRECTORY="$HOME/android/dreamXlte-hos-$HOS_VERSION"
@@ -23,11 +23,23 @@ REPO_INIT_FLAG_1="--depth=1"
 REPO_INIT_FLAG_2="--no-clone-bundle"
 CCACHE="/usr/bin/ccache"
 #KERNEL_CROSS_COMPILE="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
+#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-8.3-linaro/bin/aarch64-linux-gnu-"
+#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.2-original/bin/aarch64-linux-gnu-"
+#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.2-custom/bin/aarch64-linux-gnu-"
+#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.3-custom/bin/aarch64-linux-gnu-"
+#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-android-10.2-ct-ng/bin/aarch64-linux-android-"
+#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2-ct-ng/bin/aarch64-linux-android-"
+KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2-custom/bin/aarch64-linux-gnu-"
+#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2.1-custom/bin/aarch64-linux-gnu-"
 #KERNEL_CROSS_COMPILE_ARM32="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-"
-KERNEL_CROSS_COMPILE="/home/gavin/android/dev/toolchain/aarch64-linux-android-10.2/bin/aarch64-linux-android-"
-#KERNEL_CROSS_COMPILE_ARM32="/home/gavin/android/dev/toolchain/arm-linux-androideabi-10.2/bin/arm-linux-androideabi-"
-KERNEL_CROSS_COMPILE_ARM32="/home/gavin/android/dev/toolchain/arm-linux-androideabi-10.2_softfpu/bin/arm-linux-androideabi-"
-KERNEL_DIR="$WORK_DIRECTORY/kernel"
+#KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-gnueabi-9.2-original/bin/arm-linux-gnueabi-"
+#KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-gnueabi-9.2-custom/bin/arm-linux-gnueabi-"
+#KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-gnueabi-9.3-custom/bin/arm-linux-gnueabi-"
+#KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-androideabi-10.2-ct-ng/bin/arm-linux-androideabi--"
+KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-gnueabi-10.2-custom/bin/arm-linux-gnueabi-"
+#KERNEL_CLANG_TRIPLE="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2/bin/aarch64-linux-gnu-"
+#KERNEL_CLANG_TRIPLE="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.2/bin/aarch64-linux-gnu-"
+#KERNEL_DIR="$WORK_DIRECTORY/kernel"
 KERNEL_OUT_DIR="$WORK_DIRECTORY/out"
 NOW=$(date +"%Y%m%d")
 TIME="/usr/bin/time"
@@ -88,13 +100,13 @@ else
   echoMsg "###"
 fi
 
-VANITY_DEVICE_TAG="S8 $DEVICE_NAME"
+DEVICE_NAME_VANITY="S8 $DEVICE_NAME"
 DEVICE_NAME="${DEVICE_NAME,,}"
 
 echoMsg "###" "YELLOW"
 echoMsg "### Start of build script" "YELLOW" 
 echoMsg "###"
-echoMsg "### Building for: $VANITY_DEVICE_TAG" 
+echoMsg "### Building for: $DEVICE_NAME_VANITY" 
 echoMsg "###"
 
 PROMPT=""
@@ -202,7 +214,7 @@ else
 fi
 
 PROMPT=""
-echoMsg "### (5/7) Prepare device specific code for: $VANITY_DEVICE_TAG <Y/n>?" "NEUTRAL"
+echoMsg "### (5/7) Prepare device specific code for: $DEVICE_NAME_VANITY <Y/n>?" "NEUTRAL"
 read -r -p "(automatically continues unprompted after 2 seconds): " -t 2 -e -i Y PROMPT
 echo
 if [ -z "$PROMPT" ]; then
@@ -224,12 +236,13 @@ if [[ ! $BUILD_TYPE = "kernel" ]]; then
    # shellcheck disable=SC1091
    source build/envsetup.sh
 
-   breakfast havoc_$DEVICE_NAME-userdebug
+   breakfast havoc_$DEVICE_NAME-user
 
    echoMsg "### running croot..."
    croot
 
    echoMsg "### Do you want to clear old build output (if any exists), select Y when new code added <N/y>"
+   # shellcheck disable=SC2034
    read -r -p "(automatically continues unprompted after 5 seconds): " -t 5 -e -i N PROMPT
    echo
    if [ -z "$PROMPT" ]; then
@@ -271,7 +284,15 @@ if [[ $SKIP_BUILD_STEPS = "N" ]]; then
     for PATCH_FILE in ../../../patches/patches/kernel_samsung_universal8895/*.patch; do
     echoMsg "patching file: kernel/samsung/universal8895/$PATCH_FILE"
     patch -p 1 < "$PATCH_FILE" 
-  done 
+  done
+  
+  cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit
+  echoMsg "### applying $LOCAL_MANIFESTS_DIRECTORY/0001_kernel_makefile.patch"
+  patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0001_kernel_makefile.patch
+
+  cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit
+  echoMsg "### applying $LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch"
+  patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch
 
   # not needed, HAVOC-OS/device_samsung_universal8895-common repo has these patches applied already
   #cd "$WORK_DIRECTORY"/device/samsung/universal8895-common || exit
@@ -288,7 +309,7 @@ else
 fi
 
 PROMPT=""
-echoMsg "### (7/7) Start $VANITY_DEVICE_TAG build process (this step can take some time depending on CC_CACHE) <Y/n>?" "NEUTRAL"
+echoMsg "### (7/7) Start $DEVICE_NAME_VANITY build process (this step can take some time depending on CC_CACHE) <Y/n>?" "NEUTRAL"
 # shellcheck disable=SC2034
 read -r -p "(automatically continues unprompted after 2 seconds): " -t 2 -e -i Y PROMPT
 echo
@@ -299,14 +320,15 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
    PROMPT=""
    case "$BUILD_TYPE" in
     "full")     echoMsg "### Starting $BUILD_TYPE build, running 'brunch $DEVICE_NAME'..."
-                brunch havoc_$DEVICE_NAME-userdebug
-                if [ -f "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/Havoc-OS-v"$VANITY_HOS_VERSION"-"$NOW"-"$DEVICE_NAME"-Unofficial.zip ]; then
+                brunch havoc_$DEVICE_NAME-user
+                OUT_FILE_NAME="Havoc-OS-v$HOS_VERSION_VANITY-$NOW-$DEVICE_NAME-Unofficial.zip"
+                if [ -f "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/"$OUT_FILE_NAME" ]; then
                    echoMsg "### Custom ROM flashable zip created at: $WORK_DIRECTORY/out/target/product/$DEVICE_NAME/" "GREEN"
-                   echoMsg "### Custom ROM flashable zip name: Havoc-OS-$VANITY_HOS_VERSION=-$NOW-$DEVICE_NAME-Unofficial.zip" "GREEN"
+                   echoMsg "### Custom ROM flashable zip name: $OUT_FILE_NAME" "GREEN"
                 else
 		   echoMsg "###" "RED"
 		   echoMsg "### Custom ROM Compile failure" "RED"
-                   echoMsg "### (script cannot find the file 'Havoc-OS-v$VANITY_HOS_VERSION-$NOW-$DEVICE_NAME-Unofficial.zip')" "RED"
+                   echoMsg "### (script cannot find the file '$OUT_FILE_NAME')" "RED"
                    echoMsg "### Script aborting." "RED"
 		   echoMsg "###" "RED"
 		   exit
@@ -315,11 +337,12 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
     "recovery") echoMsg "### Starting $BUILD_TYPE build, running 'mka recoveryimage'..."
                 export WITH_TWRP="true"
                 mka recoveryimage
-                cd "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/ || exit 
+                cd "$WORK_DIRECTORY"/out/target/product/"$DEVICE_NAME"/ || exit
+                OUT_FILE_NAME="twrp-$TWRP_VERSION-$DEVICE_NAME-$NOW.img"
                 if [ -f recovery.img ]; then
-                   mv recovery.img twrp-"$TWRP_VERSION"-"$DEVICE_NAME"-"$NOW".img
+                   mv recovery.img "$OUT_FILE_NAME"
                    echoMsg "### TWRP flashable image created at: $WORK_DIRECTORY/out/target/product/$DEVICE_NAME/" "GREEN"
-                   echoMsg "### TWRP flashable image name: twrp-$TWRP_VERSION-$DEVICE_NAME-$NOW.img" "GREEN"
+                   echoMsg "### TWRP flashable image name: $OUT_FILE_NAME" "GREEN"
                 else
 		   echoMsg "###" "RED"
 		   echoMsg "### TWRP Compile failure (script cannot find the file 'recovery.img')!! Script aborting." "RED"
@@ -330,6 +353,7 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
     "kernel")   echoMsg "### Starting $BUILD_TYPE build..."
                 export CROSS_COMPILE="$CCACHE $KERNEL_CROSS_COMPILE"
                 export CROSS_COMPILE_ARM32="$CCACHE $KERNEL_CROSS_COMPILE_ARM32"
+                # export CLANG_TRIPPLE="$CCACHE $KERNEL_CLANG_TRIPLE"
                 export ARCH=arm64
 		export SUBARCH=arm64
                 export LOCALVERSION="-$DEVICE_NAME-$LINARO_VERSION_SHORT"
@@ -344,7 +368,10 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 make O="$KERNEL_OUT_DIR" mrproper
                 #make O="$KERNEL_OUT_DIR" exynos8895-"$DEVICE_NAME"_defconfig
                 make O="$KERNEL_OUT_DIR" ARCH=$ARCH exynos8895-"$DEVICE_NAME"_defconfig
-                $TIME -f "$TIME_FORMAT" make O="$KERNEL_OUT_DIR" ARCH="$ARCH" -j"$CPU_THREADS"
+                #PATH="$HOME/android/dev/toolchain/clang_11.04_r399163/bin:${PATH}"
+                #$TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIR" ARCH="$ARCH" CC=clang
+                $TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIR" ARCH="$ARCH"
+                OUT_FILE_NAME="$DEVICE_NAME-kernel-hos-$VANITY_HOS_VERSION-$LINARO_VERSION.$NOW.zip"
                 if [ -f "$KERNEL_OUT_DIR"/arch/arm64/boot/Image.gz ]; then
                    cp "$KERNEL_OUT_DIR"/arch/arm64/boot/Image.gz "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
                    cp "$KERNEL_OUT_DIR"/arch/arm64/boot/dtb.img "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
@@ -355,9 +382,9 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                    rm dtb.img
                    mv kernel.zip "$KERNEL_OUT_DIR"/arch/arm64/boot/
                    cd "$KERNEL_OUT_DIR"/arch/arm64/boot/ || exit
-                   mv kernel.zip "$DEVICE_NAME"-kernel-hos-"$VANITY_HOS_VERSION"-"$LINARO_VERSION"."$NOW".zip
+                   mv kernel.zip "$OUT_FILE_NAME"
                    echoMsg "### flashable kernel zip created at: $WORK_DIRECTORY/out/arch/arm64/boot/" "GREEN"
-                   echoMsg "### flashable kernel zip named: $DEVICE_NAME-kernel-hos-$VANITY_HOS_VERSION-$LINARO_VERSION.$NOW.zip" "GREEN"
+                   echoMsg "### flashable kernel zip named: $OUT_FILE_NAME" "GREEN"
                else
 		   echoMsg "###" "RED"
 		   echoMsg "### Kernel Compile failure (script cannot find file 'Image.gz')!! Script aborting." "RED"
@@ -369,4 +396,4 @@ else
    unsupported_response "$PROMPT"
 fi
 
-echoMsg "### End of Build Script for $VANITY_DEVICE_TAG! ###"
+echoMsg "### End of Build Script for $DEVICE_NAME_VANITY! ###"
