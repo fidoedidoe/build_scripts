@@ -11,8 +11,8 @@
 
 HOS_VERSION="ten"
 HOS_VERSION_VANITY="3.9"
-LINARO_VERSION_SHORT="gcc-10.2.0"
-LINARO_VERSION="$LINARO_VERSION_SHORT-experimental"
+GCC_VERSION="gcc-10.2.0"
+GCC_VERSION_VANITY="$GCC_VERSION-custom"
 WORK_DIRECTORY="$HOME/android/dreamXlte-hos-$HOS_VERSION"
 REPO_DIRECTORY='.repo'
 LOCAL_MANIFESTS_DIRECTORY="$REPO_DIRECTORY/local_manifests"
@@ -22,24 +22,28 @@ CPU_THREADS=$(nproc --all)
 REPO_INIT_FLAG_1="--depth=1"
 REPO_INIT_FLAG_2="--no-clone-bundle"
 CCACHE="/usr/bin/ccache"
-#KERNEL_CROSS_COMPILE="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
-#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-8.3-linaro/bin/aarch64-linux-gnu-"
-#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.2-original/bin/aarch64-linux-gnu-"
-#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.2-custom/bin/aarch64-linux-gnu-"
-#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.3-custom/bin/aarch64-linux-gnu-"
-#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-android-10.2-ct-ng/bin/aarch64-linux-android-"
-#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2-ct-ng/bin/aarch64-linux-android-"
-KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2-custom/bin/aarch64-linux-gnu-"
-#KERNEL_CROSS_COMPILE="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2.1-custom/bin/aarch64-linux-gnu-"
-#KERNEL_CROSS_COMPILE_ARM32="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-"
-#KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-gnueabi-9.2-original/bin/arm-linux-gnueabi-"
-#KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-gnueabi-9.2-custom/bin/arm-linux-gnueabi-"
-#KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-gnueabi-9.3-custom/bin/arm-linux-gnueabi-"
-#KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-androideabi-10.2-ct-ng/bin/arm-linux-androideabi--"
-KERNEL_CROSS_COMPILE_ARM32="$HOME/android/dev/toolchain/arm-linux-gnueabi-10.2-custom/bin/arm-linux-gnueabi-"
-#KERNEL_CLANG_TRIPLE="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2/bin/aarch64-linux-gnu-"
-#KERNEL_CLANG_TRIPLE="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.2/bin/aarch64-linux-gnu-"
-#KERNEL_DIR="$WORK_DIRECTORY/kernel"
+KERNEL_AARCH64_TRIPLE="aarch64-linux-gnu-"
+#KERNEL_AARCH64_TRIPLE="aarch64-linux-android-"
+KERNEL_ARM_TRIPLE="arm-linux-gnueabi-"
+#KERNEL_ARM_TRIPLE="arm-linux-androideabi-"
+KERNEL_CLANG_TRIPLE="$KERNEL_AARCH64_TRIPLE"
+CLANG_VERSION="clang-r353983c"
+#KERNEL_CROSS_COMPILE_DIRECTORY="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin"
+#KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-8.3-linaro/bin"
+#KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.2-original/bin"
+#KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.2-custom/bin"
+#KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.3-custom/bin"
+#KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-android-10.2-ct-ng/bin"
+#KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2-ct-ng/bin"
+KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2-custom/bin"
+#KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-10.2.1-custom/bin"
+#KERNEL_CROSS_COMPILE_ARM32_DIRECTORY="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/bin"
+#KERNEL_CROSS_COMPILE_ARM32_DIRECTORY="$HOME/android/dev/toolchain/arm-linux-gnueabi-9.2-original/bin"
+#KERNEL_CROSS_COMPILE_ARM32_DIRECTORY="$HOME/android/dev/toolchain/arm-linux-gnueabi-9.2-custom/bin"
+#KERNEL_CROSS_COMPILE_ARM32_DIRECTORY="$HOME/android/dev/toolchain/arm-linux-gnueabi-9.3-custom/bin"
+#KERNEL_CROSS_COMPILE_ARM32_DIRECTORY="$HOME/android/dev/toolchain/arm-linux-androideabi-10.2-ct-ng/bin"
+KERNEL_CROSS_COMPILE_ARM32_DIRECTORY="$HOME/android/dev/toolchain/arm-linux-gnueabi-10.2-custom/bin"
+KERNEL_CLANG_DIRECTORY="${WORK_DIRECTORY}/prebuilts/clang/host/linux-x86/$CLANG_VERSION/bin"
 KERNEL_OUT_DIR="$WORK_DIRECTORY/out"
 NOW=$(date +"%Y%m%d")
 TIME="/usr/bin/time"
@@ -290,9 +294,9 @@ if [[ $SKIP_BUILD_STEPS = "N" ]]; then
   echoMsg "### applying $LOCAL_MANIFESTS_DIRECTORY/0001_kernel_makefile.patch"
   patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0001_kernel_makefile.patch
 
-  cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit
-  echoMsg "### applying $LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch"
-  patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch
+  #cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit
+  #echoMsg "### applying $LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch"
+  #patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch
 
   # not needed, HAVOC-OS/device_samsung_universal8895-common repo has these patches applied already
   #cd "$WORK_DIRECTORY"/device/samsung/universal8895-common || exit
@@ -351,34 +355,41 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 fi;;
 
     "kernel")   echoMsg "### Starting $BUILD_TYPE build..."
-                export CROSS_COMPILE="$CCACHE $KERNEL_CROSS_COMPILE"
-                export CROSS_COMPILE_ARM32="$CCACHE $KERNEL_CROSS_COMPILE_ARM32"
-                # export CLANG_TRIPPLE="$CCACHE $KERNEL_CLANG_TRIPLE"
-                export ARCH=arm64
-		export SUBARCH=arm64
-                export LOCALVERSION="-$DEVICE_NAME-$LINARO_VERSION_SHORT"
-                export KBUILD_BUILD_USER="fidoedidoe"
-                export KBUILD_BUILD_HOST="on-an-underpowered-laptop"
                 cd "$WORK_DIRECTORY"/kernel/samsung/universal8895/ || exit
                 mkdir -p "$KERNEL_OUT_DIR"
                 echoMsg "CROSS_COMPILE: $CROSS_COMPILE"
                 echoMsg "defconfig: exynos8895-${DEVICE_NAME}_defconfig"
-                #cd "$KERNEL_DIR" || exit
+                PATH="${KERNEL_CLANG_DIRECTORY}:${KERNEL_CROSS_COMPILE_DIRECTORY}:${KERNEL_CROSS_COMPILE_ARM32_DIRECTORY}:${PATH}"
+                #echo $PATH
+                #export CROSS_COMPILE="$CCACHE $KERNEL_CROSS_COMPILE_DIRECTORY/$KERNEL_AARCH64_TRIPLE"
+                #export CROSS_COMPILE_ARM32="$CCACHE $KERNEL_CROSS_COMPILE_ARM32_DIRECTORY/KERNEL_ARM_TRIPLE"
+                #export CLANG_TRIPPLE="$KERNEL_CLANG_TRIPLE"
+                export LOCALVERSION="-$DEVICE_NAME-$GCC_VERSION"
+                export KBUILD_BUILD_USER="fidoedidoe"
+                export KBUILD_BUILD_HOST="on-an-underpowered-laptop"
+                export ARCH=arm64
+		#export SUBARCH=arm64
 	        make O="$KERNEL_OUT_DIR" clean
                 make O="$KERNEL_OUT_DIR" mrproper
                 #make O="$KERNEL_OUT_DIR" exynos8895-"$DEVICE_NAME"_defconfig
                 make O="$KERNEL_OUT_DIR" ARCH=$ARCH exynos8895-"$DEVICE_NAME"_defconfig
-                #PATH="$HOME/android/dev/toolchain/clang_11.04_r399163/bin:${PATH}"
-                #$TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIR" ARCH="$ARCH" CC=clang
-                $TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIR" ARCH="$ARCH"
-                OUT_FILE_NAME="$DEVICE_NAME-kernel-hos-$VANITY_HOS_VERSION-$LINARO_VERSION.$NOW.zip"
+                $TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIR" \
+                                        ARCH=$ARCH \
+                                        CC=clang \
+                                        CLANG_TRIPLE=$KERNEL_AARCH64_TRIPLE \
+                                        CROSS_COMPILE=$KERNEL_CLANG_TRIPLE \
+                                        CROSS_COMPILE_ARM32=$KERNEL_ARM_TRIPLE
+                #$TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIR" ARCH="$ARCH"
+                OUT_FILE_NAME="$DEVICE_NAME-kernel-hos-$HOS_VERSION_VANITY-$GCC_VERSION_VANITY.$NOW.zip"
                 if [ -f "$KERNEL_OUT_DIR"/arch/arm64/boot/Image.gz ]; then
-                   cp "$KERNEL_OUT_DIR"/arch/arm64/boot/Image.gz "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
+                   cp "$KERNEL_OUT_DIR"/arch/arm64/boot/Image "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
+                   #cp "$KERNEL_OUT_DIR"/arch/arm64/boot/Image.gz "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
                    cp "$KERNEL_OUT_DIR"/arch/arm64/boot/dtb.img "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
                    echoMsg "### building flashable anykernel3 zip file...."
                    cd "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3 || exit
                    zip -r9 kernel.zip ./* -x .git README.md ./*placeholder kernel.zip
-                   rm Image.gz
+                   rm Image
+                   #rm Image.gz
                    rm dtb.img
                    mv kernel.zip "$KERNEL_OUT_DIR"/arch/arm64/boot/
                    cd "$KERNEL_OUT_DIR"/arch/arm64/boot/ || exit
