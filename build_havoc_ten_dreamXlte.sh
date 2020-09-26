@@ -27,7 +27,7 @@ KERNEL_AARCH64_TRIPLE="aarch64-linux-gnu-"
 KERNEL_ARM_TRIPLE="arm-linux-gnueabi-"
 #KERNEL_ARM_TRIPLE="arm-linux-androideabi-"
 KERNEL_CLANG_TRIPLE="$KERNEL_AARCH64_TRIPLE"
-CLANG_VERSION="clang-r353983c"
+CLANG_VERSION="clang-r353983d"
 #KERNEL_CROSS_COMPILE_DIRECTORY="$WORK_DIRECTORY/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin"
 #KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-8.3-linaro/bin"
 #KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-9.2-original/bin"
@@ -44,12 +44,15 @@ KERNEL_CROSS_COMPILE_DIRECTORY="$HOME/android/dev/toolchain/aarch64-linux-gnu-10
 #KERNEL_CROSS_COMPILE_ARM32_DIRECTORY="$HOME/android/dev/toolchain/arm-linux-androideabi-10.2-ct-ng/bin"
 KERNEL_CROSS_COMPILE_ARM32_DIRECTORY="$HOME/android/dev/toolchain/arm-linux-gnueabi-10.2-custom/bin"
 KERNEL_CLANG_DIRECTORY="${WORK_DIRECTORY}/prebuilts/clang/host/linux-x86/$CLANG_VERSION/bin"
-KERNEL_OUT_DIR="$WORK_DIRECTORY/out"
+KERNEL_SOURCE_DIRECTORY="$WORK_DIRECTORY/kernel/samsung/universal8895"
+KERNEL_OUT_DIRECTORY="$WORK_DIRECTORY/out"
 NOW=$(date +"%Y%m%d")
 TIME="/usr/bin/time"
 TIME_FORMAT="------------\n The command '%C'\n Completed in [hours:]minutes:seconds \n %E \n------------"
 TWRP_VERSION="3.4.0"
 SKIP_BUILD_STEPS="N"
+#CLANG="clang"
+CLANG=""
 
 #############
 # Function(s)
@@ -275,28 +278,30 @@ if [[ $SKIP_BUILD_STEPS = "N" ]]; then
   fi
 
   # wireguard download isn't working within build script: HACK - revist. 
-  if [ ! -d "$WORK_DIRECTORY"/kernel/samsung/universal8895/net/wireguard ]; then
+  if [ ! -d "$KERNEL_SOURCE_DIRECTORY"/net/wireguard ]; then
      echoMsg "wireguard: source repo exists, purging..."
-     rm -rf "$WORK_DIRECTORY"/kernel/samsung/universal8895/net/wireguard || exit
+     rm -rf "$KERNEL_SOURCE_DIRECTORY"/net/wireguard || exit
   fi 
   echoMsg "wireguard: Downloading latest source..."
-  cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit 
+  cd "$KERNEL_SOURCE_DIRECTORY" || exit 
   scripts/fetch-latest-wireguard.sh
   echoMsg "wireguard: Downoad complete!"
 
-  cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit
+  cd "$KERNEL_SOURCE_DIRECTORY" || exit
     for PATCH_FILE in ../../../patches/patches/kernel_samsung_universal8895/*.patch; do
-    echoMsg "patching file: kernel/samsung/universal8895/$PATCH_FILE"
+    echoMsg "patching file: $KERNEL_SOURCE_DIRECTORY/$PATCH_FILE"
     patch -p 1 < "$PATCH_FILE" 
   done
   
-  cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit
+  cd "$KERNEL_SOURCE_DIRECTORY" || exit
   echoMsg "### applying $LOCAL_MANIFESTS_DIRECTORY/0001_kernel_makefile.patch"
   patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0001_kernel_makefile.patch
 
-  #cd "$WORK_DIRECTORY"/kernel/samsung/universal8895 || exit
-  #echoMsg "### applying $LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch"
-  #patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch
+  if [[ $CLANG != "clang" ]]; then
+     cd "$KERNEL_SOURCE_DIRECTORY" || exit
+     echoMsg "### applying $LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch"
+     patch -p 1 < ../../../$LOCAL_MANIFESTS_DIRECTORY/0002_arm64_makefile.patch
+  fi
 
   # not needed, HAVOC-OS/device_samsung_universal8895-common repo has these patches applied already
   #cd "$WORK_DIRECTORY"/device/samsung/universal8895-common || exit
@@ -355,44 +360,48 @@ if [[ $PROMPT =~ ^[Yy]$ ]]; then
                 fi;;
 
     "kernel")   echoMsg "### Starting $BUILD_TYPE build..."
-                cd "$WORK_DIRECTORY"/kernel/samsung/universal8895/ || exit
-                mkdir -p "$KERNEL_OUT_DIR"
-                echoMsg "CROSS_COMPILE: $CROSS_COMPILE"
-                echoMsg "defconfig: exynos8895-${DEVICE_NAME}_defconfig"
-                PATH="${KERNEL_CLANG_DIRECTORY}:${KERNEL_CROSS_COMPILE_DIRECTORY}:${KERNEL_CROSS_COMPILE_ARM32_DIRECTORY}:${PATH}"
-                #echo $PATH
-                #export CROSS_COMPILE="$CCACHE $KERNEL_CROSS_COMPILE_DIRECTORY/$KERNEL_AARCH64_TRIPLE"
-                #export CROSS_COMPILE_ARM32="$CCACHE $KERNEL_CROSS_COMPILE_ARM32_DIRECTORY/KERNEL_ARM_TRIPLE"
-                #export CLANG_TRIPPLE="$KERNEL_CLANG_TRIPLE"
+                cd "$KERNEL_SOURCE_DIRECTORY" || exit
+                mkdir -p "$KERNEL_OUT_DIRECTORY" || exit
                 export LOCALVERSION="-$DEVICE_NAME-$GCC_VERSION"
                 export KBUILD_BUILD_USER="fidoedidoe"
                 export KBUILD_BUILD_HOST="on-an-underpowered-laptop"
                 export ARCH=arm64
-		#export SUBARCH=arm64
-	        make O="$KERNEL_OUT_DIR" clean
-                make O="$KERNEL_OUT_DIR" mrproper
-                #make O="$KERNEL_OUT_DIR" exynos8895-"$DEVICE_NAME"_defconfig
-                make O="$KERNEL_OUT_DIR" ARCH=$ARCH exynos8895-"$DEVICE_NAME"_defconfig
-                $TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIR" \
-                                        ARCH=$ARCH \
-                                        CC=clang \
-                                        CLANG_TRIPLE=$KERNEL_AARCH64_TRIPLE \
-                                        CROSS_COMPILE=$KERNEL_CLANG_TRIPLE \
-                                        CROSS_COMPILE_ARM32=$KERNEL_ARM_TRIPLE
-                #$TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIR" ARCH="$ARCH"
+                if [[ $CLANG = "clang" ]]; then
+                   echoMsg "Building with $CLANG version $CLANG_VERSION"
+                   PATH="${KERNEL_CLANG_DIRECTORY}:${KERNEL_CROSS_COMPILE_DIRECTORY}:${KERNEL_CROSS_COMPILE_ARM32_DIRECTORY}:${PATH}"
+                   #echo $PATH
+                   export CROSS_COMPILE="$KERNEL_AARCH64_TRIPLE"
+                   export CROSS_COMPILE_ARM32="$KERNEL_ARM_TRIPLE"
+                   export CLANG_TRIPPLE="$KERNEL_CLANG_TRIPLE"
+                else
+                   echoMsg "Building with GCC version $GCC_VERSION_VANITY"
+                   export CROSS_COMPILE="$CCACHE $KERNEL_CROSS_COMPILE_DIRECTORY/$KERNEL_AARCH64_TRIPLE"
+                   export CROSS_COMPILE_ARM32="$CCACHE $KERNEL_CROSS_COMPILE_ARM32_DIRECTORY/$KERNEL_ARM_TRIPLE"
+		   export SUBARCH=arm64
+                fi
+                echoMsg "CROSS_COMPILE: $CROSS_COMPILE"
+                echoMsg "defconfig: exynos8895-${DEVICE_NAME}_defconfig"
+	        make O="$KERNEL_OUT_DIRECTORY" clean
+                make O="$KERNEL_OUT_DIRECTORY" mrproper
+                make O="$KERNEL_OUT_DIRECTORY" ARCH=$ARCH exynos8895-"$DEVICE_NAME"_defconfig
+                if [[ $CLANG = "clang" ]]; then
+                   $TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIRECTORY" ARCH="$ARCH" CC="$CLANG"
+                else
+                   $TIME -f "$TIME_FORMAT" make -j"$CPU_THREADS" O="$KERNEL_OUT_DIRECTORY" ARCH="$ARCH"
+                fi
                 OUT_FILE_NAME="$DEVICE_NAME-kernel-hos-$HOS_VERSION_VANITY-$GCC_VERSION_VANITY.$NOW.zip"
-                if [ -f "$KERNEL_OUT_DIR"/arch/arm64/boot/Image.gz ]; then
-                   cp "$KERNEL_OUT_DIR"/arch/arm64/boot/Image "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
-                   #cp "$KERNEL_OUT_DIR"/arch/arm64/boot/Image.gz "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
-                   cp "$KERNEL_OUT_DIR"/arch/arm64/boot/dtb.img "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3
+                if [ -f "$KERNEL_OUT_DIRECTORY"/arch/arm64/boot/Image.gz ]; then
+                   cp "$KERNEL_OUT_DIRECTORY"/arch/arm64/boot/Image "$KERNEL_SOURCE_DIRECTORY"/anyKernel3
+                   #cp "$KERNEL_OUT_DIRECTORY"/arch/arm64/boot/Image.gz "$KERNEL_SOURCE_DIRECTORY"/anyKernel3
+                   cp "$KERNEL_OUT_DIRECTORY"/arch/arm64/boot/dtb.img "$KERNEL_SOURCE_DIRECTORY"/anyKernel3
                    echoMsg "### building flashable anykernel3 zip file...."
-                   cd "$WORK_DIRECTORY"/kernel/samsung/universal8895/anyKernel3 || exit
+                   cd "$KERNEL_SOURCE_DIRECTORY"/anyKernel3 || exit
                    zip -r9 kernel.zip ./* -x .git README.md ./*placeholder kernel.zip
                    rm Image
                    #rm Image.gz
                    rm dtb.img
-                   mv kernel.zip "$KERNEL_OUT_DIR"/arch/arm64/boot/
-                   cd "$KERNEL_OUT_DIR"/arch/arm64/boot/ || exit
+                   mv kernel.zip "$KERNEL_OUT_DIRECTORY"/arch/arm64/boot/
+                   cd "$KERNEL_OUT_DIRECTORY"/arch/arm64/boot/ || exit
                    mv kernel.zip "$OUT_FILE_NAME"
                    echoMsg "### flashable kernel zip created at: $WORK_DIRECTORY/out/arch/arm64/boot/" "GREEN"
                    echoMsg "### flashable kernel zip named: $OUT_FILE_NAME" "GREEN"
