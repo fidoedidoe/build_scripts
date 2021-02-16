@@ -162,10 +162,6 @@ echoMsg "###"
 echoMsg "### Building for: $DEVICE_NAME_VANITY" 
 echoMsg "###"
 
-echo "skip_build_steps: $SKIP_BUILD_STEPS, refresh_source: $REFRESH_SOURCE"
-exit
-
-
 if [[ $SKIP_BUILD_STEPS = "N" ]]; then
 
   echoMsg "### Initialise/Re-base HOS Repo's <Y/n>?" "NEUTRAL"
