@@ -1,10 +1,11 @@
 # Overview
 Collection of `#!/bin/bash` scripts created to help automate the initial build or subsequent rebuild of AOSP (or variants) from source for a number of devices. Each script follows a similar approach, the instructions below are in general applicable to all. In essence each script automates the steps and processes created by others (none of which is my own work - all credit goes to the orignal creators). 
 
-* build_lineage_16-0_kminilte.sh
-* build_lineage_m9.sh
-* build_aosp_7-1-0_nexus7.sh
-* build_lineage_14-1_gt-n51x0.sh {N5100|N5110|N5120}
+* ./build_lineage_16-0_kminilte.sh
+* ./build_lineage_m9.sh
+* ./build_aosp_7-1-0_nexus7.sh
+* ./build_lineage_14-1_gt-n51x0.sh {N5100|N5110|N5120}
+* ./build_havoc_eleven_dreamXlte.sh --device dream2lte --build-type full -c -g -r
 * etc
 
 I have only tested these scripts on my own environment: Gnome Ubuntu 19.04; 16GB RAM; i7-7700HQ; If your environment differs from this then your experience may differ from mine. Setting up your build environment is beyond the scope of this readme, there's lots of good advice / examples out there.
